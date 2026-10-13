@@ -1,0 +1,11 @@
+# React (Git will find these inside your frontend folder)
+node_modules/
+build/
+dist/
+
+# FastAPI / Python (For when you run your single .py file)
+__pycache__/
+*.pyc
+venv/
+env/
+.env
