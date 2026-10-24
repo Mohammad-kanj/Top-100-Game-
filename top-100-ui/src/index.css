@@ -5,141 +5,397 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-    background-color: #060714;
+    background-color: #06030c;
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Pixelify Sans', 'Press Start 2P', monospace, sans-serif;
   }
 }
 
-/* Synthwave Animated Grid Background */
-.synthwave-background {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-  background: radial-gradient(circle at 50% 20%, #170b3b 0%, #080616 65%, #030209 100%);
+/* Arcade Tactile Slabs: Distinct Drop Shadows & Inner Highlights */
+.balatro-card {
+  background: #14112e;
+  border: 2px solid #2e265c;
+  box-shadow: 0 4px 0 #000000, inset 0 1.5px 0 rgba(255, 255, 255, 0.2);
 }
 
-.synthwave-horizon {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 48%;
-  background: linear-gradient(180deg, rgba(5, 2, 18, 0) 0%, rgba(255, 0, 127, 0.12) 80%, rgba(0, 240, 255, 0.25) 100%);
-  border-bottom: 2px solid rgba(0, 240, 255, 0.5);
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6), 0 0 60px rgba(255, 0, 127, 0.3);
+.balatro-card-interactive {
+  background: #14112e;
+  border: 2px solid #2e265c;
+  box-shadow: 0 4px 0 #000000, inset 0 1.5px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.08s ease;
+}
+.balatro-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: #38bdf8;
+  box-shadow: 0 6px 0 #000000, inset 0 1.5px 0 rgba(255, 255, 255, 0.3);
+}
+.balatro-card-interactive:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #000000;
 }
 
-.synthwave-sun {
-  position: absolute;
-  bottom: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #FFE600 0%, #FF007F 60%, #7928CA 100%);
-  box-shadow: 0 0 50px rgba(255, 0, 127, 0.6), 0 0 100px rgba(255, 230, 0, 0.3);
-  opacity: 0.85;
+/* Balatro Panel and Modal Depth */
+.balatro-panel {
+  background: #100d26;
+  border: 2.5px solid #2d2358;
+  box-shadow: 0 8px 0 #000000, inset 0 2px 0 rgba(255, 255, 255, 0.15);
 }
 
-.synthwave-grid-plane {
-  position: absolute;
-  top: 48%;
-  left: -50%;
-  width: 200%;
-  height: 120%;
-  transform-origin: top center;
-  transform: perspective(350px) rotateX(68deg);
-  background-image: 
-    linear-gradient(to right, rgba(0, 240, 255, 0.35) 2px, transparent 2px),
-    linear-gradient(to bottom, rgba(255, 0, 127, 0.35) 2px, transparent 2px);
-  background-size: 50px 50px;
-  animation: grid-scroll 3s linear infinite;
+.balatro-modal {
+  background: #110d29;
+  border: 3px solid #362a69;
+  box-shadow: 0 12px 0 #000000, inset 0 2px 0 rgba(255, 255, 255, 0.16);
 }
 
-@keyframes grid-scroll {
+/* ========================================================= */
+/* CHUNKY PHYSICAL ARCADE BUTTONS                            */
+/* Solid base colors, crisp top highlight, hard 0px shadow  */
+/* ========================================================= */
+
+.balatro-btn-blue {
+  background: #1d4ed8;
+  border: 2px solid #000000;
+  border-top: 2.5px solid rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+}
+.balatro-btn-blue:hover {
+  background: #2563eb;
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
+}
+.balatro-btn-blue:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
+}
+
+.balatro-btn-purple {
+  background: #7c3aed;
+  border: 2px solid #000000;
+  border-top: 2.5px solid rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+}
+.balatro-btn-purple:hover {
+  background: #8b5cf6;
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
+}
+.balatro-btn-purple:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
+}
+
+.balatro-btn-dark {
+  background: #181135;
+  border: 2px solid #000000;
+  border-top: 2px solid rgba(255, 255, 255, 0.3);
+  color: #e2e8f0;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.2), 0 4px 0 #000000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.balatro-btn-dark:hover {
+  background: #241a4d;
+  transform: translateY(-1px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.3), 0 5px 0 #000000;
+}
+.balatro-btn-dark:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 2px 0 #000000;
+}
+
+.balatro-btn-white {
+  background: #f8fafc;
+  border: 2px solid #000000;
+  border-top: 2.5px solid #ffffff;
+  color: #0f172a;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.95), 0 5px 0 #000000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.balatro-btn-white:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 1), 0 6px 0 #000000;
+}
+.balatro-btn-white:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 0 #000000;
+}
+
+.balatro-btn-red {
+  background: #dc2626;
+  border: 2px solid #000000;
+  border-top: 2.5px solid rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.balatro-btn-red:hover {
+  background: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
+}
+.balatro-btn-red:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
+}
+
+.balatro-btn-green {
+  background: #16a34a;
+  border: 2px solid #000000;
+  border-top: 2.5px solid rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.balatro-btn-green:hover {
+  background: #22c55e;
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
+}
+.balatro-btn-green:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
+}
+
+.balatro-btn-orange {
+  background: #ea580c;
+  border: 2px solid #000000;
+  border-top: 2.5px solid rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.balatro-btn-orange:hover {
+  background: #f97316;
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
+}
+.balatro-btn-orange:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
+}
+
+.balatro-btn-yellow {
+  background: #ca8a04;
+  border: 2px solid #000000;
+  border-top: 2.5px solid rgba(255, 255, 255, 0.6);
+  color: #1e1b4b;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 5px 0 #000000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.balatro-btn-yellow:hover {
+  background: #eab308;
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7), 0 6px 0 #000000;
+}
+.balatro-btn-yellow:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
+}
+
+/* ========================================================= */
+/* GLOWING ARCADE CABINET TITLE (BALATRO FONT + SKEW)        */
+/* ========================================================= */
+
+.arcade-skew-title {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  user-select: none;
+  transform: skewX(-12deg);
+  transform-origin: center bottom;
+}
+
+.arcade-neon-top {
+  font-family: 'Titan One', 'Impact', cursive, sans-serif;
+  text-transform: uppercase;
+  color: #bae6fd;
+  letter-spacing: 0.12em;
+  text-shadow:
+    0 0 3px #ffffff,
+    0 0 8px #38bdf8,
+    0 0 16px #0284c7,
+    2px 3px 0 #000000;
+}
+
+.arcade-neon-100 {
+  font-family: 'Titan One', 'Impact', cursive, sans-serif;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 0.88;
+  text-shadow:
+    0 0 3px #ffffff,
+    0 0 8px #38bdf8,
+    0 0 18px #0284c7,
+    0 0 30px #7c3aed,
+    4px 5px 0 #000000;
+}
+
+/* Fallback legacy title class */
+.balatro-title-text {
+  font-family: 'Titan One', 'Impact', cursive, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  transform: skewX(-12deg);
+  text-shadow:
+    0 0 3px #ffffff,
+    0 0 8px #38bdf8,
+    0 0 18px #0284c7,
+    3px 3px 0 #000000;
+}
+
+/* ========================================================= */
+/* HOLLOW KNIGHT SPLIT CLOUD INDICATORS                      */
+/* ========================================================= */
+
+@keyframes cloud-half-pulse-left {
   0% {
-    background-position: 0 0;
+    transform: translateX(0px) scale(0.96);
+    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
   }
   100% {
-    background-position: 0 50px;
+    transform: translateX(-5px) scale(1.06);
+    filter: drop-shadow(0 0 14px rgba(168, 85, 247, 0.9));
   }
 }
 
-/* Neon Glow Utilities */
-.neon-glow-cyan {
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.8), 0 0 18px rgba(0, 240, 255, 0.4);
+@keyframes cloud-half-pulse-right {
+  0% {
+    transform: translateX(0px) scale(0.96);
+    filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.7));
+  }
+  100% {
+    transform: translateX(5px) scale(1.06);
+    filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.9));
+  }
 }
 
-.neon-glow-magenta {
-  text-shadow: 0 0 8px rgba(255, 0, 127, 0.8), 0 0 18px rgba(255, 0, 127, 0.4);
+.cloud-half-left {
+  animation: cloud-half-pulse-left 1.2s ease-in-out infinite alternate;
 }
 
-.neon-glow-yellow {
-  text-shadow: 0 0 8px rgba(255, 230, 0, 0.8), 0 0 18px rgba(255, 230, 0, 0.4);
+.cloud-half-right {
+  animation: cloud-half-pulse-right 1.2s ease-in-out infinite alternate;
 }
 
-.neon-box-cyan {
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.15);
+/* Clean, un-boxed Hollow Knight Menu Item */
+.hk-menu-item {
+  font-family: 'Titan One', 'Pixelify Sans', cursive, sans-serif;
+  background: transparent;
+  border: none;
+  outline: none;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  color: rgba(226, 232, 240, 0.7);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85);
 }
 
-.neon-box-magenta {
-  box-shadow: 0 0 15px rgba(255, 0, 127, 0.3), inset 0 0 10px rgba(255, 0, 127, 0.15);
+.hk-menu-item:hover,
+.hk-menu-item-active {
+  color: #ffffff !important;
+  transform: scale(1.1);
+  text-shadow:
+    0 0 8px #ffffff,
+    0 0 16px #38bdf8,
+    0 0 28px #818cf8 !important;
 }
 
-.neon-box-yellow {
-  box-shadow: 0 0 15px rgba(255, 230, 0, 0.3), inset 0 0 10px rgba(255, 230, 0, 0.15);
+/* Smooth black outline pill for the subtitle segment */
+.balatro-subtitle-capsule {
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #000000;
+  box-shadow: 
+    0 4px 14px rgba(0, 0, 0, 0.9), 
+    0 0 14px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-/* Pulse animation for active team / urgent timer */
-@keyframes neon-pulse {
+/* Number Tiles Depth */
+.balatro-tile-unrevealed {
+  background: #151136;
+  border: 1.5px solid #281f57;
+  border-bottom: 3.5px solid #0a081a;
+  box-shadow: 0 3px 0 #05040e, inset 0 1.5px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+.balatro-tile-unrevealed:hover {
+  transform: translateY(-2px);
+  border-color: #0091ff;
+}
+
+.balatro-tile-revealed {
+  background: #ffffff;
+  border: 1.5px solid #0f172a;
+  border-bottom: 3.5px solid #020617;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45), inset 0 1.5px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ========================================================= */
+/* STRICTLY RESERVED NEON GLOWS                              */
+/* 1. CURRENT GUESSER                                        */
+/* 2. LAST GUESSED TILE                                      */
+/* ========================================================= */
+
+.neon-guesser-highlight {
+  border: 2.5px solid #ffffff !important;
+  box-shadow: 
+    0 0 20px rgba(255, 106, 0, 0.95),
+    0 0 40px rgba(0, 145, 255, 0.75),
+    inset 0 0 12px rgba(255, 255, 255, 0.4) !important;
+  animation: guesser-pulse 1.8s ease-in-out infinite;
+  z-index: 20;
+}
+
+@keyframes guesser-pulse {
   0%, 100% {
-    opacity: 1;
-    transform: scale(1);
+    box-shadow: 0 0 20px rgba(255, 106, 0, 0.95), 0 0 40px rgba(0, 145, 255, 0.75), inset 0 0 12px rgba(255, 255, 255, 0.4);
+    transform: scale(1.04);
   }
   50% {
-    opacity: 0.88;
-    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(255, 138, 0, 1), 0 0 55px rgba(56, 189, 248, 0.9), inset 0 0 18px rgba(255, 255, 255, 0.6);
+    transform: scale(1.07);
   }
 }
 
-.animate-neon-pulse {
-  animation: neon-pulse 1.8s ease-in-out infinite;
+.neon-last-guessed-tile {
+  background: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 
+    0 0 20px #ff6a00,
+    0 0 38px #0091ff,
+    inset 0 0 12px rgba(255, 255, 255, 0.9) !important;
+  animation: tile-neon-reveal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  z-index: 25;
 }
 
-/* Tile flip reveal */
-@keyframes tile-flip {
-  0% {
-    transform: rotateX(90deg) scale(0.8);
-    opacity: 0;
-  }
-  50% {
-    transform: rotateX(0deg) scale(1.08);
-    opacity: 1;
-  }
-  100% {
-    transform: rotateX(0deg) scale(1);
-  }
+@keyframes tile-neon-reveal {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1.06); opacity: 1; }
 }
 
-.animate-tile-reveal {
-  animation: tile-flip 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-/* Custom scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #090a1a;
+  background: #0a071a;
 }
 ::-webkit-scrollbar-thumb {
-  background: #201f46;
+  background: #2a1f59;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00F0FF;
+  background: #ff6a00;
 }

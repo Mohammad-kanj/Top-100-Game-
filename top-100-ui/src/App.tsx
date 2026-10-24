@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import SynthwaveBackground from './components/SynthwaveBackground';
+import React, { useState, useEffect, useRef } from 'react';
+import WhirlpoolBackground from './components/WhirlpoolBackground';
 import MainMenu from './components/MainMenu';
 import MatchSetup from './components/MatchSetup';
 import HowToPlayModal from './components/HowToPlayModal';
@@ -9,43 +9,65 @@ import HostOverrideModal from './components/HostOverrideModal';
 import RoundSummaryModal from './components/RoundSummaryModal';
 import MatchPodiumModal from './components/MatchPodiumModal';
 import { soundFx } from './soundFx';
+import {
+  GameState,
+  Category,
+  LastGuess,
+  FocusedTile,
+  ConfirmModalState,
+  MatchConfig,
+  HostOverrideData,
+  GameSettings
+} from './types';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
-export default function App() {
+export default function App(): React.JSX.Element {
   // Screen state: 'MENU' | 'MATCH_SETUP' | 'ARENA'
-  const [screen, setScreen] = useState('MENU');
+  const [screen, setScreen] = useState<'MENU' | 'MATCH_SETUP' | 'ARENA'>('MENU');
+
+  // Balatro Display Mode: 'orange' | 'blue'
+  const [displayMode, setDisplayMode] = useState<'orange' | 'blue'>(() => {
+    return (localStorage.getItem('top100_display_mode') as 'orange' | 'blue') || 'orange';
+  });
+
+  const toggleDisplayMode = (): void => {
+    setDisplayMode((prev) => {
+      const next = prev === 'orange' ? 'blue' : 'orange';
+      localStorage.setItem('top100_display_mode', next);
+      return next;
+    });
+  };
 
   // Backend state
-  const [gameState, setGameState] = useState(null);
-  const [categories, setCategories] = useState([]);
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Modals
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showTeams, setShowTeams] = useState(false);
-  const [showHostOverride, setShowHostOverride] = useState(false);
-  const [showRoundSummary, setShowRoundSummary] = useState(false);
-  const [showMatchPodium, setShowMatchPodium] = useState(false);
-  const [focusedTile, setFocusedTile] = useState(null);
-  const [confirmModal, setConfirmModal] = useState({ show: false, action: null, message: '' });
+  const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showTeams, setShowTeams] = useState<boolean>(false);
+  const [showHostOverride, setShowHostOverride] = useState<boolean>(false);
+  const [showRoundSummary, setShowRoundSummary] = useState<boolean>(false);
+  const [showMatchPodium, setShowMatchPodium] = useState<boolean>(false);
+  const [focusedTile, setFocusedTile] = useState<FocusedTile | null>(null);
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({ show: false, action: null, message: '' });
 
   // Gameplay local state
-  const [guess, setGuess] = useState('');
-  const [lastGuess, setLastGuess] = useState({ text: '---', status: 'none', message: '' });
-  const [lastRevealedIndex, setLastRevealedIndex] = useState(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isMuted, setIsMuted] = useState(soundFx.isMuted());
+  const [guess, setGuess] = useState<string>('');
+  const [lastGuess, setLastGuess] = useState<LastGuess>({ text: '---', status: 'none', message: '' });
+  const [lastRevealedIndex, setLastRevealedIndex] = useState<number | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   // Turn timer
-  const [timeRemaining, setTimeRemaining] = useState(null);
-  const timerRef = useRef(null);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Fetch backend game state
-  const fetchState = async () => {
+  const fetchState = async (): Promise<void> => {
     try {
       const res = await fetch(`${API_BASE}/game/state`);
-      const data = await res.json();
+      const data: GameState = await res.json();
       setGameState(data);
 
       if (data.is_match_over) {
@@ -59,10 +81,10 @@ export default function App() {
   };
 
   // Fetch categories list
-  const fetchCategories = async () => {
+  const fetchCategories = async (): Promise<void> => {
     try {
       const res = await fetch(`${API_BASE}/game/categories`);
-      const data = await res.json();
+      const data: Category[] = await res.json();
       setCategories(data);
     } catch (err) {
       console.error('Failed to load categories', err);
@@ -74,13 +96,13 @@ export default function App() {
     fetchState();
     fetchCategories();
 
-    const handleFullscreenChange = () => {
+    const handleFullscreenChange = (): void => {
       setIsFullscreen(!!document.fullscreenElement);
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     // Secret Host console hotkey: Ctrl + Shift + H (or Cmd + Shift + H)
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'H' || e.key === 'h')) {
         e.preventDefault();
         soundFx.playClick();
@@ -94,6 +116,22 @@ export default function App() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  // Pass turn (called when timer expires or skipped)
+  const handlePassTurn = async (): Promise<void> => {
+    try {
+      const res = await fetch(`${API_BASE}/game/pass_turn`, { method: 'POST' });
+      const data = await res.json();
+      setLastGuess({
+        text: 'TIME EXPIRED',
+        status: 'incorrect',
+        message: `Time is up! Strike recorded for ${data.team || 'team'}`
+      });
+      fetchState();
+    } catch (err) {
+      console.error('Pass turn error', err);
+    }
+  };
 
   // Turn timer handler
   useEffect(() => {
@@ -117,7 +155,6 @@ export default function App() {
       setTimeRemaining((prev) => {
         if (prev === null) return null;
         if (prev <= 1) {
-          // Timer expired!
           soundFx.playIncorrect();
           handlePassTurn();
           return timerSetting;
@@ -134,7 +171,7 @@ export default function App() {
     };
   }, [screen, gameState?.current_turn, gameState?.current_round, gameState?.is_round_over]);
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = (): void => {
     soundFx.playClick();
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch((err) => console.error(err));
@@ -143,30 +180,8 @@ export default function App() {
     }
   };
 
-  const handleToggleMute = () => {
-    const next = soundFx.toggleMuted();
-    setIsMuted(next);
-    if (!next) soundFx.playCorrect();
-  };
-
-  // Pass turn (called when timer expires or skipped)
-  const handlePassTurn = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/game/pass_turn`, { method: 'POST' });
-      const data = await res.json();
-      setLastGuess({
-        text: 'TIME EXPIRED',
-        status: 'incorrect',
-        message: `TIME'S UP! Strike recorded for ${data.team || 'team'}`
-      });
-      fetchState();
-    } catch (err) {
-      console.error('Pass turn error', err);
-    }
-  };
-
   // Submit guess
-  const submitGuess = async (e) => {
+  const submitGuess = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!guess.trim() || gameState?.is_round_over) return;
 
@@ -183,7 +198,7 @@ export default function App() {
         setLastGuess({
           text: guess,
           status: 'correct',
-          message: `CORRECT: ${data.name} (#${data.rank}) +${data.points} pts!`
+          message: `CORRECT: ${data.name} (#${data.rank}) +${data.points} pts`
         });
         setLastRevealedIndex(data.index);
       } else if (data.status === 'exists') {
@@ -191,7 +206,7 @@ export default function App() {
         setLastGuess({
           text: guess,
           status: 'exists',
-          message: `ALREADY REVEALED: ${data.name}!`
+          message: `ALREADY REVEALED: ${data.name}`
         });
       } else if (data.status === 'incorrect') {
         soundFx.playIncorrect();
@@ -210,7 +225,7 @@ export default function App() {
   };
 
   // Start match
-  const handleStartMatch = async (matchConfig) => {
+  const handleStartMatch = async (matchConfig: MatchConfig): Promise<void> => {
     try {
       await fetch(`${API_BASE}/game/start_match`, {
         method: 'POST',
@@ -229,7 +244,7 @@ export default function App() {
   };
 
   // Next round
-  const handleNextRound = async () => {
+  const handleNextRound = async (): Promise<void> => {
     try {
       soundFx.playCorrect();
       await fetch(`${API_BASE}/game/next_round`, { method: 'POST' });
@@ -243,7 +258,7 @@ export default function App() {
   };
 
   // Host override
-  const handleHostOverride = async (overrideData) => {
+  const handleHostOverride = async (overrideData: HostOverrideData): Promise<void> => {
     try {
       await fetch(`${API_BASE}/game/override`, {
         method: 'POST',
@@ -257,7 +272,7 @@ export default function App() {
   };
 
   // Save settings
-  const handleSaveSettings = async (newSettings) => {
+  const handleSaveSettings = async (newSettings: GameSettings): Promise<void> => {
     try {
       await fetch(`${API_BASE}/game/settings`, {
         method: 'POST',
@@ -271,7 +286,7 @@ export default function App() {
   };
 
   // Save teams
-  const handleSaveTeams = async (newTeams) => {
+  const handleSaveTeams = async (newTeams: string[]): Promise<void> => {
     try {
       await fetch(`${API_BASE}/game/teams`, {
         method: 'POST',
@@ -285,7 +300,7 @@ export default function App() {
   };
 
   // Execute confirm action (Give Up / Reset)
-  const executeConfirmAction = async () => {
+  const executeConfirmAction = async (): Promise<void> => {
     if (!confirmModal.action) return;
     try {
       if (confirmModal.action === 'give_up') {
@@ -301,12 +316,11 @@ export default function App() {
 
   if (!gameState) {
     return (
-      <div className="min-h-screen bg-[#060714] text-white flex flex-col items-center justify-center font-bold tracking-wider relative overflow-hidden">
-        <SynthwaveBackground />
-        <div className="relative z-10 text-center animate-pulse">
-          <div className="text-4xl mb-4">👾</div>
-          <div className="text-2xl text-[#00F0FF] uppercase drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]">
-            CONNECTING TO CYBER SERVER...
+      <div className="min-h-screen bg-[#07030f] text-white flex flex-col items-center justify-center font-bold tracking-wider relative overflow-hidden">
+        <WhirlpoolBackground dominantColor={displayMode} />
+        <div className="relative z-10 text-center animate-pulse balatro-card px-8 py-5 rounded-2xl">
+          <div className="text-xl text-orange-300 uppercase tracking-widest font-black">
+            Connecting to server...
           </div>
         </div>
       </div>
@@ -320,10 +334,10 @@ export default function App() {
   const maxStrikes = gameState.settings?.max_strikes || 3;
 
   return (
-    <div className="min-h-screen bg-[#060714] text-white flex flex-col relative overflow-x-hidden select-none">
+    <div className="min-h-screen bg-[#07030f] text-white flex flex-col relative overflow-x-hidden select-none">
       
-      {/* Synthwave animated background */}
-      <SynthwaveBackground />
+      {/* Balatro Whirlpool background */}
+      <WhirlpoolBackground dominantColor={displayMode} />
 
       {/* SCREEN 1: MAIN MENU */}
       {screen === 'MENU' && (
@@ -331,9 +345,9 @@ export default function App() {
           onPlay={() => setScreen('MATCH_SETUP')}
           onHowToPlay={() => setShowHowToPlay(true)}
           onSettings={() => setShowSettings(true)}
-          onTeams={() => setShowTeams(true)}
           onToggleFullscreen={toggleFullscreen}
           isFullscreen={isFullscreen}
+          onToggleDisplayMode={toggleDisplayMode}
         />
       )}
 
@@ -351,109 +365,84 @@ export default function App() {
 
       {/* SCREEN 3: GAME ARENA */}
       {screen === 'ARENA' && (
-        <div className="relative z-10 flex flex-col flex-1 p-3 md:p-5 max-w-[1400px] mx-auto w-full">
+        <div className="relative z-10 flex flex-col flex-1 p-3 md:p-5 max-w-[1360px] mx-auto w-full">
           
-          {/* Header Controls Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-[#0d0c24]/90 border border-[#00F0FF]/30 backdrop-blur-md rounded-2xl p-3 shadow-lg">
+          {/* Header Controls Bar with Bright Balatro Depth */}
+          <div className="balatro-panel p-3 rounded-2xl mb-4 flex flex-wrap items-center justify-between gap-3">
             
+            {/* Left Controls: Settings & Rules */}
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => { soundFx.playClick(); setScreen('MENU'); }}
-                className="bg-[#17153b] hover:bg-[#252254] text-gray-200 border border-gray-700 px-3 py-1.5 rounded-xl font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5"
-              >
-                <span>◀</span> MENU
-              </button>
-
-              <button
-                type="button"
                 onClick={() => { soundFx.playClick(); setShowSettings(true); }}
-                className="bg-[#17153b] hover:bg-[#252254] text-gray-200 border border-gray-700 px-2.5 py-1.5 rounded-xl text-xs transition"
+                className="balatro-btn-dark px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-orange-200"
                 title="Settings"
               >
-                ⚙️
+                Settings
               </button>
 
               <button
                 type="button"
                 onClick={() => { soundFx.playClick(); setShowHowToPlay(true); }}
-                className="bg-[#17153b] hover:bg-[#252254] text-gray-200 border border-gray-700 px-2.5 py-1.5 rounded-xl text-xs transition"
-                title="How to Play"
+                className="balatro-btn-dark px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-blue-200"
+                title="Rules"
               >
-                📖
+                Rules
               </button>
             </div>
 
-            {/* Round Badge */}
+            {/* Center: Round Badge (Balatro Orange/Blue Slabs) */}
             <div className="flex items-center gap-2">
-              <div className="bg-[#1a1740] border border-[#FF007F]/50 px-4 py-1 rounded-full text-xs font-black text-[#FF007F] tracking-widest uppercase shadow-[0_0_10px_rgba(255,0,127,0.3)]">
-                {isMulti ? `ROUND ${currentRoundNum} OF ${totalRounds}` : `ROUND ${gameState.current_round + 1}`}
+              <div className="bg-[#ff6a00] border-2 border-[#9a3412] border-b-4 shadow-[0_3px_0_#2b0c03,inset_0_1.5px_0_rgba(255,255,255,0.3)] px-4 py-1.5 rounded-xl text-xs font-black text-white tracking-wider uppercase">
+                {isMulti ? `Round ${currentRoundNum} of ${totalRounds}` : `Round ${gameState.current_round + 1}`}
               </div>
 
               {isMulti && (
-                <div className="hidden md:inline-block bg-[#00F0FF]/15 border border-[#00F0FF]/40 text-[#00F0FF] px-3 py-1 rounded-full text-[11px] font-bold tracking-wider">
-                  ⚡ Points Cumulative
+                <div className="hidden md:inline-block bg-[#0091ff] border-2 border-[#1e40af] border-b-4 shadow-[0_3px_0_#091333,inset_0_1.5px_0_rgba(255,255,255,0.3)] text-white px-3.5 py-1 rounded-xl text-[11px] font-black tracking-wide uppercase">
+                  Points Cumulative
                 </div>
               )}
             </div>
 
             {/* Right Controls */}
             <div className="flex items-center gap-2">
-              {/* Discrete Host Console Trigger */}
-              <button
-                type="button"
-                onClick={() => { soundFx.playClick(); setShowHostOverride(true); }}
-                className="bg-[#17153b] hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-gray-800 hover:border-red-500/40 p-2 rounded-xl transition text-xs"
-                title="Host Console (Ctrl+Shift+H)"
-              >
-                🛡️
-              </button>
-
-              <button
-                type="button"
-                onClick={handleToggleMute}
-                className="bg-[#17153b] hover:bg-[#252254] text-gray-300 border border-gray-700 p-2 rounded-xl transition text-xs"
-                title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
-              >
-                {isMuted ? '🔇' : '🔊'}
-              </button>
-
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="bg-[#17153b] hover:bg-[#252254] text-gray-300 border border-gray-700 p-2 rounded-xl transition text-xs"
+                className="balatro-btn-dark px-3.5 py-1.5 rounded-xl text-xs font-black tracking-wider cursor-pointer uppercase text-slate-200"
                 title="Fullscreen"
               >
-                {isFullscreen ? '🗗' : '⛶'}
+                {isFullscreen ? 'Exit Full' : 'Fullscreen'}
               </button>
 
               {gameState.is_round_over && (
                 <button
                   type="button"
                   onClick={() => { soundFx.playClick(); setShowRoundSummary(true); }}
-                  className="bg-[#FFE600] text-black font-black px-3 py-1.5 rounded-xl text-xs uppercase tracking-wider shadow-[0_0_12px_rgba(255,230,0,0.4)] animate-bounce"
+                  className="balatro-btn-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
                 >
-                  RECAP 📊
+                  Recap
                 </button>
               )}
             </div>
 
           </div>
 
-          {/* Category Title & Banner */}
+          {/* Category Title with Vibrant Balatro Shadow */}
           <div className="mb-4 text-center">
-            <h1 className="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FFE600] via-[#00F0FF] to-[#FFE600] uppercase tracking-wide drop-shadow-[0_0_15px_rgba(0,240,255,0.6)] px-2">
-              {gameState.current_round_title || 'LOADING CATEGORY...'}
+            <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wide px-2 drop-shadow-[0_4px_0_#0f051c]">
+              {gameState.current_round_title || 'Loading Category...'}
             </h1>
             {isMulti && (
-              <div className="md:hidden text-[11px] text-[#00F0FF] font-bold tracking-wider mt-1">
+              <div className="md:hidden text-xs text-blue-300 font-bold tracking-wide mt-1">
                 Points are cumulative across rounds
               </div>
             )}
           </div>
 
-          {/* Team Scorecards with Strikes */}
-          <div className="flex flex-wrap justify-center items-center gap-3 md:gap-4 mb-4">
+          {/* Team Scorecards with Balatro Depth */}
+          {/* STRICTLY RESERVED NEON GLOW FOR CURRENT GUESSER! */}
+          <div className="flex flex-wrap justify-center items-center gap-3.5 mb-4">
             {gameState.teams.map((team, idx) => {
               const isActive = idx === gameState.current_turn && !gameState.is_round_over;
               const isElim = gameState.eliminated?.[idx];
@@ -462,31 +451,31 @@ export default function App() {
               return (
                 <div
                   key={idx}
-                  className={`px-4 py-3 rounded-2xl border-2 min-w-[150px] md:min-w-[180px] text-center transition-all duration-300 relative ${
+                  className={`px-5 py-3 rounded-2xl min-w-[155px] md:min-w-[185px] text-center transition-all relative ${
                     isElim
-                      ? 'bg-gray-900/80 border-gray-800 opacity-50'
+                      ? 'opacity-35 balatro-card'
                       : isActive
-                      ? 'bg-[#1b1742] border-[#FFE600] shadow-[0_0_20px_rgba(255,230,0,0.4)] scale-105'
-                      : 'bg-[#0f0e26]/80 border-gray-800 hover:border-gray-700'
+                      ? 'neon-guesser-highlight bg-[#1f103b]' // RESERVED NEON GLOW FOR CURRENT GUESSER!
+                      : 'balatro-card'
                   }`}
                 >
-                  {/* Active turn badge */}
+                  {/* Active turn indicator tag */}
                   {isActive && (
-                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#FFE600] text-black font-black text-[10px] px-2 py-0.5 rounded-full tracking-wider uppercase">
-                      ACTIVE TURN
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#ff6a00] text-white font-black text-[9px] px-3 py-0.5 rounded-full tracking-wider uppercase shadow-[0_2px_0_rgba(0,0,0,0.5)]">
+                      Current Guesser
                     </div>
                   )}
 
                   {/* Team Name */}
-                  <div className="font-black text-xs md:text-sm text-gray-200 truncate mb-1">
+                  <div className="font-black text-xs md:text-sm text-slate-100 truncate mb-1">
                     {team}
                   </div>
 
                   {/* Score */}
-                  <div className="text-2xl md:text-3xl font-black text-[#00F0FF] drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]">
+                  <div className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#080414]">
                     {isMulti ? gameState.match_scores[idx] || 0 : gameState.scores[idx] || 0}
                     {isMulti && (
-                      <span className="text-[10px] text-gray-400 block font-normal">
+                      <span className="text-[10px] text-slate-400 block font-normal">
                         ({gameState.scores[idx] || 0} this round)
                       </span>
                     )}
@@ -502,11 +491,11 @@ export default function App() {
                             key={sIdx}
                             className={`text-xs font-black transition-all ${
                               hasStrike
-                                ? 'text-red-500 drop-shadow-[0_0_6px_rgba(239,68,68,0.8)] scale-110'
-                                : 'text-gray-700'
+                                ? 'text-rose-500 drop-shadow-[0_2px_0_#4c0519]'
+                                : 'text-slate-700'
                             }`}
                           >
-                            ✖
+                            X
                           </span>
                         );
                       })}
@@ -514,8 +503,8 @@ export default function App() {
                   )}
 
                   {isElim && (
-                    <div className="text-[10px] font-black text-red-400 tracking-wider uppercase mt-1">
-                      ELIMINATED
+                    <div className="text-[10px] font-black text-rose-400 tracking-wider uppercase mt-1">
+                      Eliminated
                     </div>
                   )}
                 </div>
@@ -524,49 +513,47 @@ export default function App() {
           </div>
 
           {/* Turn Timer & Active Guess Form */}
-          <div className="flex flex-col items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center mb-3">
             
             {/* Countdown timer display if enabled */}
             {timeRemaining !== null && !gameState.is_round_over && (
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  {currentTurnTeam}'s Turn Time:
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-xs font-black text-orange-200 uppercase tracking-wider">
+                  {currentTurnTeam}'s Turn:
                 </span>
                 <span className={`font-mono font-black text-lg ${
                   timeRemaining <= 5 
-                    ? 'text-red-400 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse' 
-                    : 'text-[#FFE600]'
+                    ? 'text-rose-400 animate-pulse' 
+                    : 'text-amber-300'
                 }`}>
                   {timeRemaining}s
                 </span>
               </div>
             )}
 
-            {/* Input Form */}
-            <form onSubmit={submitGuess} className="w-full max-w-xl">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={guess}
-                  onChange={(e) => setGuess(e.target.value)}
-                  placeholder={gameState.is_round_over ? 'Round Complete' : `Type guess for ${currentTurnTeam}...`}
-                  disabled={gameState.is_round_over}
-                  className="w-full bg-[#12102e]/95 border-2 border-[#00F0FF]/50 focus:border-[#FFE600] text-white px-5 py-3.5 rounded-2xl text-lg md:text-xl font-bold shadow-[0_0_20px_rgba(0,240,255,0.25)] outline-none text-center transition"
-                  autoFocus
-                />
-              </div>
+            {/* Input Form with Balatro Inner Depth */}
+            <form onSubmit={submitGuess} className="w-full max-w-lg">
+              <input
+                type="text"
+                value={guess}
+                onChange={(e) => setGuess(e.target.value)}
+                placeholder={gameState.is_round_over ? 'Round Complete' : `Type guess for ${currentTurnTeam}...`}
+                disabled={gameState.is_round_over}
+                className="w-full bg-[#0e0a24] border-2 border-[#2f245a] border-b-4 border-b-[#120d2b] focus:border-orange-500 text-white px-5 py-3.5 rounded-2xl text-lg font-black outline-none text-center transition shadow-[inset_0_3px_6px_rgba(0,0,0,0.6),0_4px_0_#070512]"
+                autoFocus
+              />
             </form>
 
             {/* Last Guess Feedback Pill */}
             {lastGuess.message && (
-              <div className={`mt-2.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-md animate-in fade-in ${
+              <div className={`mt-2.5 px-4 py-1.5 rounded-xl text-xs font-black tracking-wider uppercase border-2 border-b-4 shadow-[0_3px_0_rgba(0,0,0,0.5)] ${
                 lastGuess.status === 'correct'
-                  ? 'bg-green-500/20 border-green-400 text-green-300'
+                  ? 'bg-blue-600 border-blue-900 text-white'
                   : lastGuess.status === 'exists'
-                  ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                  ? 'bg-orange-600 border-orange-950 text-white'
                   : lastGuess.status === 'incorrect'
-                  ? 'bg-red-500/20 border-red-400 text-red-300'
-                  : 'bg-gray-800 border-gray-600 text-gray-300'
+                  ? 'bg-rose-700 border-rose-950 text-white'
+                  : 'bg-slate-800 border-slate-950 text-slate-200'
               }`}>
                 {lastGuess.message}
               </div>
@@ -574,8 +561,9 @@ export default function App() {
 
           </div>
 
-          {/* 10x10 Tile Grid */}
-          <div className="grid grid-cols-10 gap-1.5 md:gap-2 max-w-[1280px] mx-auto w-full mb-4 bg-[#0a091f]/80 p-3 md:p-4 rounded-2xl border border-gray-800 shadow-2xl flex-1">
+          {/* 10x10 Tile Grid with Balatro Slabs */}
+          {/* STRICTLY RESERVED NEON GLOW FOR LAST GUESSED TILE! */}
+          <div className="grid grid-cols-10 gap-1.5 md:gap-2 max-w-[1240px] mx-auto w-full mb-3 balatro-panel p-3.5 rounded-2xl flex-1">
             {Array.from({ length: 100 }).map((_, i) => {
               const rank = i + 1;
               const isRevealed = gameState.revealed_indices.includes(i);
@@ -592,24 +580,24 @@ export default function App() {
                       setFocusedTile({ rank, name: answerName, team: guessingTeam });
                     }
                   }}
-                  className={`h-11 sm:h-12 md:h-14 rounded-lg flex items-center justify-center p-1 text-center transition-all cursor-pointer relative overflow-hidden ${
+                  className={`h-11 sm:h-12 md:h-13 rounded-xl flex items-center justify-center p-1 text-center transition-all cursor-pointer relative overflow-hidden ${
                     isRevealed
                       ? isJustRevealed
-                        ? 'bg-[#2ECC40] border-2 border-white text-black font-black z-10 shadow-[0_0_15px_rgba(46,204,64,0.8)] scale-105 animate-tile-reveal'
-                        : 'bg-gradient-to-b from-[#FFE600] to-[#E6B800] border border-[#FFE600]/80 text-black font-black shadow-sm'
-                      : 'bg-[#141238] hover:bg-[#1f1c54] border border-[#2b2766] hover:border-[#00F0FF]/50 text-gray-400 font-mono font-bold text-xs md:text-sm'
+                        ? 'neon-last-guessed-tile' // RESERVED NEON GLOW FOR LAST GUESSED TILE!
+                        : 'balatro-tile-revealed'
+                      : 'balatro-tile-unrevealed'
                   }`}
                   title={isRevealed ? `${rank}. ${answerName}` : `Rank #${rank}`}
                 >
                   {isRevealed ? (
                     <div className="flex flex-col items-center justify-center w-full h-full overflow-hidden leading-tight">
-                      <span className="text-[10px] md:text-[11px] font-black line-clamp-2 w-full text-center px-0.5">
+                      <span className="text-[10px] md:text-[11px] font-black line-clamp-2 w-full text-center px-0.5 text-slate-950">
                         {answerName}
                       </span>
-                      <span className="text-[9px] opacity-75 font-mono">#{rank}</span>
+                      <span className="text-[9px] opacity-75 font-mono font-bold text-slate-700">#{rank}</span>
                     </div>
                   ) : (
-                    <span>{rank}</span>
+                    <span className="font-black text-white/90 drop-shadow-[0_1px_0_#05040d]">{rank}</span>
                   )}
                 </div>
               );
@@ -617,7 +605,7 @@ export default function App() {
           </div>
 
           {/* Bottom Actions */}
-          <div className="flex items-center justify-between gap-3 pt-1 pb-4">
+          <div className="flex items-center justify-between gap-3 pt-1 pb-3">
             <button
               type="button"
               onClick={() => {
@@ -625,21 +613,21 @@ export default function App() {
                 setConfirmModal({
                   show: true,
                   action: 'give_up',
-                  message: 'Are you sure you want to REVEAL ALL remaining answers and conclude this round?'
+                  message: 'Are you sure you want to reveal all remaining answers and conclude this round?'
                 });
               }}
-              className="bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/50 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition"
+              className="balatro-btn-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer text-rose-300 hover:text-white"
             >
-              REVEAL ALL (GIVE UP)
+              Reveal All (Give Up)
             </button>
 
             {gameState.is_round_over && (
               <button
                 type="button"
                 onClick={() => { soundFx.playFanfare(); setShowRoundSummary(true); }}
-                className="bg-[#00F0FF] hover:bg-[#00d0df] text-black font-black px-6 py-2.5 rounded-xl text-sm uppercase tracking-wider transition shadow-[0_0_15px_rgba(0,240,255,0.4)]"
+                className="balatro-btn-white px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer"
               >
-                VIEW ROUND SUMMARY ➔
+                View Round Summary
               </button>
             )}
           </div>
@@ -647,24 +635,24 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL 1: TILE DETAIL INSPECTOR */}
+      {/* MODAL 1: TILE DETAIL INSPECTOR (Balatro Modal Depth) */}
       {focusedTile && (
         <div
-          className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4 cursor-pointer"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 cursor-pointer"
           onClick={() => setFocusedTile(null)}
         >
           <div
-            className="bg-[#100e2b] border-4 border-[#FFE600] p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(255,230,0,0.4)] text-center max-w-2xl w-full cursor-default animate-in zoom-in-95"
+            className="balatro-modal p-8 rounded-3xl max-w-lg w-full cursor-default text-center animate-in zoom-in-95"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-[#FFE600] font-black tracking-widest text-lg mb-2 uppercase">
-              RANK #{focusedTile.rank}
+            <div className="text-orange-400 font-black tracking-widest text-sm mb-1 uppercase">
+              Rank #{focusedTile.rank}
             </div>
-            <div className="text-3xl md:text-5xl font-black text-white mb-6 uppercase drop-shadow-[0_0_15px_rgba(255,230,0,0.8)] leading-tight">
+            <div className="text-3xl md:text-4xl font-black text-white mb-6 uppercase leading-tight drop-shadow-[0_3px_0_#120822]">
               {focusedTile.name}
             </div>
-            <div className="bg-[#1c1945] text-gray-200 py-3 px-6 rounded-2xl font-bold border border-[#2d296b] inline-block text-sm shadow-md">
-              GUESSED BY: <span className="text-[#00F0FF] ml-2 font-black">{focusedTile.team}</span>
+            <div className="bg-[#171336] text-slate-200 py-2.5 px-6 rounded-xl font-black border-2 border-[#2b2158] border-b-4 shadow-[0_3px_0_#090616] inline-block text-xs uppercase tracking-wider">
+              Guessed by: <span className="text-white ml-1">{focusedTile.team}</span>
             </div>
           </div>
         </div>
@@ -672,28 +660,28 @@ export default function App() {
 
       {/* MODAL 2: CONFIRM ACTION */}
       {confirmModal.show && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-[#100e2b] border-2 border-red-500 p-6 md:p-8 rounded-2xl w-full max-w-md text-center shadow-[0_0_40px_rgba(239,68,68,0.4)]">
-            <h2 className="text-xl font-black text-red-400 mb-3 uppercase tracking-wider">
-              CONFIRM ACTION
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="balatro-modal p-7 rounded-2xl w-full max-w-sm text-center">
+            <h2 className="text-lg font-black text-rose-400 mb-2 uppercase tracking-wider">
+              Confirm Action
             </h2>
-            <p className="text-sm text-gray-300 font-bold mb-6">
+            <p className="text-xs text-slate-200 mb-6 leading-relaxed font-bold">
               {confirmModal.message}
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setConfirmModal({ show: false, action: null, message: '' })}
-                className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2.5 rounded-xl font-bold text-sm transition"
+                className="balatro-btn-dark flex-1 py-2.5 rounded-xl font-black text-xs uppercase cursor-pointer"
               >
-                CANCEL
+                Cancel
               </button>
               <button
                 type="button"
                 onClick={executeConfirmAction}
-                className="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-black text-sm transition shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                className="balatro-btn-red flex-1 py-2.5 rounded-xl font-black text-xs uppercase cursor-pointer"
               >
-                CONFIRM
+                Confirm
               </button>
             </div>
           </div>
@@ -711,6 +699,10 @@ export default function App() {
           settings={gameState.settings || {}}
           onSave={handleSaveSettings}
           onClose={() => setShowSettings(false)}
+          onReturnToMainMenu={() => {
+            setShowSettings(false);
+            setScreen('MENU');
+          }}
         />
       )}
 

@@ -1,11 +1,11 @@
 // Web Audio API Retro Arcade Synthesizer
-let audioCtx = null;
-let isMuted = localStorage.getItem('top100_sfx_muted') === 'true';
-let volume = parseFloat(localStorage.getItem('top100_sfx_volume') || '0.6');
+let audioCtx: AudioContext | null = null;
+let isMuted: boolean = localStorage.getItem('top100_sfx_muted') === 'true';
+let volume: number = parseFloat(localStorage.getItem('top100_sfx_volume') || '0.6');
 
-function getAudioContext() {
+function getAudioContext(): AudioContext | null {
   if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (AudioContextClass) {
       audioCtx = new AudioContextClass();
     }
@@ -17,23 +17,23 @@ function getAudioContext() {
 }
 
 export const soundFx = {
-  isMuted: () => isMuted,
-  setMuted: (muted) => {
+  isMuted: (): boolean => isMuted,
+  setMuted: (muted: boolean): void => {
     isMuted = muted;
     localStorage.setItem('top100_sfx_muted', muted ? 'true' : 'false');
   },
-  toggleMuted: () => {
+  toggleMuted: (): boolean => {
     soundFx.setMuted(!isMuted);
     return isMuted;
   },
-  getVolume: () => volume,
-  setVolume: (v) => {
+  getVolume: (): number => volume,
+  setVolume: (v: number): void => {
     volume = Math.max(0, Math.min(1, v));
     localStorage.setItem('top100_sfx_volume', volume.toString());
   },
 
   // Play ascending synth arpeggio for correct answer
-  playCorrect: () => {
+  playCorrect: (): void => {
     if (isMuted || volume <= 0) return;
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -61,7 +61,7 @@ export const soundFx = {
   },
 
   // Play retro buzzer for wrong answer / strike
-  playIncorrect: () => {
+  playIncorrect: (): void => {
     if (isMuted || volume <= 0) return;
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -85,7 +85,7 @@ export const soundFx = {
   },
 
   // Play ticking clock pulse
-  playTick: () => {
+  playTick: (): void => {
     if (isMuted || volume <= 0) return;
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -108,7 +108,7 @@ export const soundFx = {
   },
 
   // Play urgent tick for last 5 seconds
-  playUrgentTick: () => {
+  playUrgentTick: (): void => {
     if (isMuted || volume <= 0) return;
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -131,13 +131,12 @@ export const soundFx = {
   },
 
   // Play fanfare for round / match win
-  playFanfare: () => {
+  playFanfare: (): void => {
     if (isMuted || volume <= 0) return;
     const ctx = getAudioContext();
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    // Fanfare chord melody
     const sequence = [
       { f: 523.25, t: 0.0, d: 0.15 },
       { f: 659.25, t: 0.15, d: 0.15 },
@@ -164,7 +163,7 @@ export const soundFx = {
   },
 
   // Gentle button click
-  playClick: () => {
+  playClick: (): void => {
     if (isMuted || volume <= 0) return;
     const ctx = getAudioContext();
     if (!ctx) return;
