@@ -6,6 +6,7 @@ interface SettingsModalProps {
   settings: GameSettings;
   onSave: (settings: GameSettings) => void;
   onClose: () => void;
+  onQuitGame?: () => void;
   onReturnToMainMenu?: () => void;
 }
 
@@ -13,9 +14,26 @@ export default function SettingsModal({
   settings,
   onSave,
   onClose,
+  onQuitGame,
   onReturnToMainMenu
 }: SettingsModalProps): React.JSX.Element {
-  const [localSettings, setLocalSettings] = useState<GameSettings>({ ...settings });
+  const [showQuitConfirm, setShowQuitConfirm] = useState<boolean>(false);
+  const [localSettings, setLocalSettings] = useState<GameSettings>(() => {
+    const s = { ...settings };
+    if (!s.end_condition || !['both', 'turns', 'points'].includes(s.end_condition)) {
+      s.end_condition = 'both';
+    }
+    if (s.turn_timer === undefined || ![0, 30, 60, 90].includes(s.turn_timer)) {
+      s.turn_timer = 30;
+    }
+    if (s.max_turns === undefined || ![0, 10, 15, 20].includes(s.max_turns)) {
+      s.max_turns = s.end_condition === 'turns' ? 15 : 0;
+    }
+    if (s.point_threshold === undefined || ![0, 250, 500, 750, 1000, 1500, 2500].includes(s.point_threshold)) {
+      s.point_threshold = 500;
+    }
+    return s;
+  });
   const [sfxMuted, setSfxMuted] = useState<boolean>(soundFx.isMuted());
   const [sfxVol, setSfxVol] = useState<number>(soundFx.getVolume());
 
@@ -36,97 +54,96 @@ export default function SettingsModal({
       <div className="balatro-modal rounded-3xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="bg-[#1a1442] border-b-2 border-[#2b2164] p-5 flex items-center justify-between">
-          <h2 className="text-xl font-black text-white tracking-wide uppercase drop-shadow-[0_2px_0_#0d0924]">
-            Game Settings
-          </h2>
+        <div className="bg-[#003c5a] border-b-2 border-[#0071b4] p-5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-black text-white tracking-wide uppercase drop-shadow-[0_2px_0_#0c1079]">
+              Settings
+            </h2>
+            {onQuitGame && (
+              <span className="bg-[#3120cd]/50 text-[#62f6bd] border border-[#62f6bd]/50 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                ⏸ Paused
+              </span>
+            )}
+          </div>
           <button 
             onClick={() => { soundFx.playClick(); onClose(); }}
-            className="text-purple-300 hover:text-white hover:bg-white/10 rounded-xl w-8 h-8 flex items-center justify-center transition font-black text-sm cursor-pointer"
+            className="text-[#9cf6ff] hover:text-[#62f6bd] hover:bg-white/10 rounded-xl w-8 h-8 flex items-center justify-center transition font-black text-sm cursor-pointer"
           >
             ✕
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-5 text-purple-100">
+        <div className="p-6 overflow-y-auto space-y-5 text-[#9cf6ff]">
 
-          {/* Turn Timer */}
+          {/* End Condition Mode */}
           <div>
-            <label className="block text-xs font-black tracking-wider uppercase text-purple-300 mb-2">
-              Turn Timer (Seconds)
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { val: 0, label: 'Off' },
-                { val: 15, label: '15s' },
-                { val: 30, label: '30s' },
-                { val: 60, label: '60s' }
-              ].map(({ val, label }) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => { soundFx.playClick(); setLocalSettings({ ...localSettings, turn_timer: val }); }}
-                  className={`py-2 rounded-xl font-black text-sm border-2 border-b-4 transition cursor-pointer ${
-                    localSettings.turn_timer === val
-                      ? 'bg-blue-600 border-blue-900 text-white shadow-[0_3px_0_#0a1438,inset_0_2px_0_rgba(255,255,255,0.3)]'
-                      : 'balatro-btn-dark text-slate-300'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Max Strikes */}
-          <div>
-            <label className="block text-xs font-black tracking-wider uppercase text-rose-300 mb-2">
-              Max Strikes Before Elimination
-            </label>
-            <div className="grid grid-cols-5 gap-2">
-              {[
-                { val: 0, label: 'Off' },
-                { val: 1, label: '1 Strike' },
-                { val: 2, label: '2 Strikes' },
-                { val: 3, label: '3 Strikes' },
-                { val: 5, label: '5 Strikes' }
-              ].map(({ val, label }) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => { soundFx.playClick(); setLocalSettings({ ...localSettings, max_strikes: val }); }}
-                  className={`py-2 px-1 rounded-xl font-black text-xs md:text-sm border-2 border-b-4 transition text-center cursor-pointer ${
-                    localSettings.max_strikes === val
-                      ? 'bg-rose-600 border-rose-950 text-white shadow-[0_3px_0_#3f0714,inset_0_2px_0_rgba(255,255,255,0.3)]'
-                      : 'balatro-btn-dark text-slate-300'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Max Turns per Team */}
-          <div>
-            <label className="block text-xs font-black tracking-wider uppercase text-purple-300 mb-2">
-              Max Turns Per Team
+            <label className="block text-xs font-black tracking-wider uppercase text-[#9cf6ff] mb-2">
+              Game End Condition
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { val: 0, label: 'Unlimited' },
-                { val: 5, label: '5 Turns' },
-                { val: 10, label: '10 Turns' }
+                { val: 'both', label: 'Turns + Points' },
+                { val: 'turns', label: 'Turns Only' },
+                { val: 'points', label: 'Points Only' }
+              ].map(({ val, label }) => {
+                const isSelected = (localSettings.end_condition || 'both') === val;
+                return (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => {
+                      soundFx.playSettingsChange();
+                      const updated: GameSettings = {
+                        ...localSettings,
+                        end_condition: val as 'both' | 'turns' | 'points'
+                      };
+                      if (val === 'turns' && (updated.max_turns === 0 || !updated.max_turns)) {
+                        updated.max_turns = 15;
+                      }
+                      if (val === 'points' && (!updated.point_threshold || updated.point_threshold === 0)) {
+                        updated.point_threshold = 500;
+                      }
+                      setLocalSettings(updated);
+                    }}
+                    className={`py-2 px-1 rounded-xl font-black text-xs md:text-sm border-2 border-b-4 transition cursor-pointer text-center ${
+                      isSelected
+                        ? 'bg-[#62f6bd] border-[#087d6a] border-b-[#0c1079] text-[#003c5a] shadow-[0_3px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.6)]'
+                        : 'balatro-btn-dark text-[#6ad6cd]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-[#6ad6cd]/80 font-semibold mt-1.5">
+              {(localSettings.end_condition || 'both') === 'both' && 'Whichever happens first: hitting point target or finishing turn limit.'}
+              {localSettings.end_condition === 'turns' && 'Round ends when turn limit is reached. Highest points win!'}
+              {localSettings.end_condition === 'points' && 'Race to the target score! No turn limits apply.'}
+            </p>
+          </div>
+
+          {/* Turn Timer */}
+          <div>
+            <label className="block text-xs font-black tracking-wider uppercase text-[#9cf6ff] mb-2">
+              Turn Timer
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { val: 0, label: 'Off (Untimed)' },
+                { val: 30, label: '30 secs' },
+                { val: 60, label: '60 secs' },
+                { val: 90, label: '90 secs' }
               ].map(({ val, label }) => (
                 <button
                   key={val}
                   type="button"
-                  onClick={() => { soundFx.playClick(); setLocalSettings({ ...localSettings, max_turns: val }); }}
-                  className={`py-2 rounded-xl font-black text-sm border-2 border-b-4 transition cursor-pointer ${
-                    localSettings.max_turns === val
-                      ? 'bg-purple-600 border-purple-950 text-white shadow-[0_3px_0_#1b0433,inset_0_2px_0_rgba(255,255,255,0.3)]'
-                      : 'balatro-btn-dark text-slate-300'
+                  onClick={() => { soundFx.playSettingsChange(); setLocalSettings({ ...localSettings, turn_timer: val }); }}
+                  className={`py-2 px-1 rounded-xl font-black text-xs md:text-sm border-2 border-b-4 transition cursor-pointer text-center ${
+                    localSettings.turn_timer === val
+                      ? 'bg-[#62f6bd] border-[#087d6a] border-b-[#0c1079] text-[#003c5a] shadow-[0_3px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.6)]'
+                      : 'balatro-btn-dark text-[#6ad6cd]'
                   }`}
                 >
                   {label}
@@ -135,107 +152,134 @@ export default function SettingsModal({
             </div>
           </div>
 
-          {/* Scoring Formula */}
-          <div>
-            <label className="block text-xs font-black tracking-wider uppercase text-purple-300 mb-2">
-              Scoring Formula
-            </label>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => { soundFx.playClick(); setLocalSettings({ ...localSettings, scoring_mode: 'top_answer' }); }}
-                className={`p-3.5 rounded-xl text-left border-2 border-b-4 transition text-xs md:text-sm cursor-pointer ${
-                  localSettings.scoring_mode === 'top_answer'
-                    ? 'bg-[#291a5c] border-purple-400 border-b-[#1b0841] text-white shadow-[0_4px_0_#0e0424,inset_0_1.5px_0_rgba(255,255,255,0.2)]'
-                    : 'balatro-card text-purple-200'
-                }`}
-              >
-                <div className="font-black text-white">Top Answer Bonus</div>
-                <div className="text-[11px] text-purple-200/70 mt-0.5">#1 = 100 pts, #100 = 1 pt</div>
-              </button>
+          {/* Winning Point Threshold */}
+          <div className={localSettings.end_condition === 'turns' ? 'opacity-40 pointer-events-none' : ''}>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-black tracking-wider uppercase text-[#9cf6ff]">
+                Winning Point Threshold
+              </label>
+              {localSettings.end_condition === 'turns' && (
+                <span className="text-[10px] font-black text-[#00b6de] uppercase tracking-wide">
+                  (Disabled in Turns Only)
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {[
+                { val: 250, label: '250' },
+                { val: 500, label: '500' },
+                { val: 750, label: '750' },
+                { val: 1000, label: '1000' },
+                { val: 1500, label: '1500' },
+                { val: 2500, label: '2500' }
+              ].map(({ val, label }) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => { soundFx.playSettingsChange(); setLocalSettings({ ...localSettings, point_threshold: val }); }}
+                  className={`py-2 px-1 rounded-xl font-black text-xs md:text-sm border-2 border-b-4 transition text-center cursor-pointer ${
+                    (localSettings.point_threshold ?? 500) === val
+                      ? 'bg-[#62f6bd] border-[#087d6a] border-b-[#0c1079] text-[#003c5a] shadow-[0_3px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.6)]'
+                      : 'balatro-btn-dark text-[#6ad6cd]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#6ad6cd]/80 font-semibold mt-1.5">
+              Single round win target, or overall cumulative match target in tournaments.
+            </p>
+          </div>
 
-              <button
-                type="button"
-                onClick={() => { soundFx.playClick(); setLocalSettings({ ...localSettings, scoring_mode: 'deep_cut' }); }}
-                className={`p-3.5 rounded-xl text-left border-2 border-b-4 transition text-xs md:text-sm cursor-pointer ${
-                  localSettings.scoring_mode === 'deep_cut'
-                    ? 'bg-[#291a5c] border-purple-400 border-b-[#1b0841] text-white shadow-[0_4px_0_#0e0424,inset_0_1.5px_0_rgba(255,255,255,0.2)]'
-                    : 'balatro-card text-purple-200'
-                }`}
-              >
-                <div className="font-black text-white">Deep Cut Bonus</div>
-                <div className="text-[11px] text-purple-200/70 mt-0.5">#1 = 1 pt, #100 = 100 pts</div>
-              </button>
+          {/* Max Turns per Team */}
+          <div className={localSettings.end_condition === 'points' ? 'opacity-40 pointer-events-none' : ''}>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-black tracking-wider uppercase text-[#9cf6ff]">
+                Max Turns Per Team
+              </label>
+              {localSettings.end_condition === 'points' && (
+                <span className="text-[10px] font-black text-[#00b6de] uppercase tracking-wide">
+                  (Unlimited in Points Only)
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { val: 0, label: 'Unlimited', disabled: localSettings.end_condition === 'turns' },
+                { val: 10, label: '10 Turns' },
+                { val: 15, label: '15 Turns' },
+                { val: 20, label: '20 Turns' }
+              ].map(({ val, label, disabled }) => (
+                <button
+                  key={val}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => { soundFx.playSettingsChange(); setLocalSettings({ ...localSettings, max_turns: val }); }}
+                  className={`py-2 rounded-xl font-black text-xs md:text-sm border-2 border-b-4 transition cursor-pointer ${
+                    disabled
+                      ? 'opacity-30 cursor-not-allowed balatro-btn-dark text-slate-500'
+                      : localSettings.max_turns === val
+                      ? 'bg-[#62f6bd] border-[#087d6a] border-b-[#0c1079] text-[#003c5a] shadow-[0_3px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.6)]'
+                      : 'balatro-btn-dark text-[#6ad6cd]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Sound Controls */}
-          <div className="pt-3 border-t-2 border-[#2b2164]">
+          <div className="pt-3 border-t-2 border-[#0071b4]">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-black tracking-wider uppercase text-purple-300">
+              <span className="text-xs font-black tracking-wider uppercase text-[#9cf6ff]">
                 Sound Effects
               </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = !sfxMuted;
-                    setSfxMuted(next);
-                    if (!next) soundFx.playCorrect();
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 border-b-4 transition cursor-pointer ${
-                    !sfxMuted 
-                      ? 'bg-blue-600 border-blue-900 text-white shadow-[0_2px_0_#0b112c]' 
-                      : 'balatro-btn-dark text-slate-400'
-                  }`}
-                >
-                  {sfxMuted ? 'Muted' : 'Enabled'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => soundFx.playCorrect()}
-                  className="balatro-btn-dark px-3 py-1.5 rounded-xl text-xs font-black text-purple-200 cursor-pointer"
-                  title="Test Sound"
-                >
-                  Test Sound
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => soundFx.playCorrect()}
+                className="balatro-btn-dark px-3 py-1.5 rounded-xl text-xs font-black text-[#62f6bd] cursor-pointer"
+                title="Test Sound"
+              >
+                Test Sound
+              </button>
             </div>
 
-            {!sfxMuted && (
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-purple-300">Volume</span>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="1.0"
-                  step="0.05"
-                  value={sfxVol}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value);
-                    setSfxVol(v);
-                    soundFx.setVolume(v);
-                  }}
-                  className="flex-1 accent-purple-400 cursor-pointer"
-                />
-                <span className="text-xs font-mono font-bold text-purple-300 w-8">{Math.round(sfxVol * 100)}%</span>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-[#9cf6ff]">Volume</span>
+              <input
+                type="range"
+                min="0.0"
+                max="1.0"
+                step="0.05"
+                value={sfxVol}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  setSfxVol(v);
+                  soundFx.setVolume(v);
+                  soundFx.setMuted(v <= 0);
+                }}
+                onMouseUp={() => soundFx.playSettingsChange()}
+                onTouchEnd={() => soundFx.playSettingsChange()}
+                className="flex-1 accent-[#62f6bd] cursor-pointer"
+              />
+              <span className="text-xs font-mono font-bold text-[#62f6bd] w-10 text-right">{Math.round(sfxVol * 100)}%</span>
+            </div>
           </div>
 
-          {/* Return to Main Menu Option */}
-          {onReturnToMainMenu && (
-            <div className="pt-3 border-t-2 border-[#2b2164]">
+          {/* Quit Game Button (Only shown when mid-game) */}
+          {onQuitGame && (
+            <div className="pt-3 border-t-2 border-[#0071b4]">
               <button
                 type="button"
                 onClick={() => {
                   soundFx.playClick();
-                  onClose();
-                  onReturnToMainMenu();
+                  setShowQuitConfirm(true);
                 }}
-                className="w-full py-3 px-4 balatro-btn-dark hover:border-rose-700 text-rose-300 font-black text-xs uppercase tracking-wider rounded-xl transition cursor-pointer text-center"
+                className="w-full py-3 px-4 balatro-btn-red text-rose-100 font-black text-xs uppercase tracking-wider rounded-xl transition cursor-pointer text-center"
               >
-                Return to Main Menu
+                Quit Game
               </button>
             </div>
           )}
@@ -243,22 +287,61 @@ export default function SettingsModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#1a1442] border-t-2 border-[#2b2164] flex justify-between gap-3">
+        <div className="p-4 bg-[#003c5a] border-t-2 border-[#0071b4] flex justify-between gap-3">
           <button
             onClick={() => { soundFx.playClick(); onClose(); }}
-            className="balatro-btn-dark px-5 py-2.5 rounded-xl text-purple-200 font-black transition text-sm cursor-pointer"
+            className="balatro-btn-dark px-5 py-2.5 rounded-xl text-[#9cf6ff] font-black transition text-sm cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="balatro-btn-white font-black px-7 py-2.5 rounded-xl transition tracking-wide text-sm cursor-pointer"
+            className="balatro-btn-primary font-black px-7 py-2.5 rounded-xl transition tracking-wide text-sm cursor-pointer text-[#003c5a]"
           >
-            Save Settings
+            Save
           </button>
         </div>
 
       </div>
+
+      {/* Quit Confirmation Popup Overlay */}
+      {showQuitConfirm && onQuitGame && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in">
+          <div className="balatro-modal p-6 md:p-8 rounded-3xl max-w-sm w-full text-center animate-in zoom-in-95 border-rose-600">
+            <div className="text-3xl mb-2">⚠️</div>
+            <h3 className="text-lg font-black text-rose-400 uppercase tracking-wider mb-2">
+              Quit Game?
+            </h3>
+            <p className="text-sm text-[#9cf6ff]/80 font-semibold mb-6 leading-relaxed">
+              Your round data will be lost. Are you sure you want to quit?
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  setShowQuitConfirm(false);
+                }}
+                className="balatro-btn-dark px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-slate-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  setShowQuitConfirm(false);
+                  onClose();
+                  onQuitGame();
+                }}
+                className="balatro-btn-red px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-white shadow-lg"
+              >
+                Yes, Quit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

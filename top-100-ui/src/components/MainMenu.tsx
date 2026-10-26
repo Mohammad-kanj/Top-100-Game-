@@ -7,7 +7,6 @@ interface MainMenuProps {
   onSettings: () => void;
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
-  onToggleDisplayMode: () => void;
 }
 
 // Hollow Knight indicator: One cloud split in half on both sides
@@ -20,7 +19,7 @@ function SplitCloudIndicator({ side }: { side: 'left' | 'right' }): React.JSX.El
     >
       <svg
         viewBox="0 0 32 36"
-        className="w-8 h-9 sm:w-9 sm:h-10 text-cyan-300 drop-shadow-[0_0_12px_rgba(56,189,248,0.95)] filter"
+        className="w-8 h-9 sm:w-9 sm:h-10 text-[#62f6bd] drop-shadow-[0_0_12px_rgba(98,246,189,0.95)] filter"
         fill="currentColor"
         style={{ transform: side === 'right' ? 'scaleX(-1)' : 'none' }}
       >
@@ -40,36 +39,54 @@ export default function MainMenu({
   onHowToPlay,
   onSettings,
   onToggleFullscreen,
-  isFullscreen,
-  onToggleDisplayMode
+  isFullscreen
 }: MainMenuProps): React.JSX.Element {
   // Hollow Knight menu selection tracking (supports mouse hover & keyboard arrow navigation)
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
+
+  const handleQuit = (): void => {
+    try {
+      window.close();
+    } catch {
+      // ignore
+    }
+    setTimeout(() => {
+      try {
+        window.open('', '_self', '');
+        window.close();
+      } catch {
+        // ignore
+      }
+    }, 100);
+  };
 
   const menuItems = [
     {
       id: 'play',
       label: 'PLAY GAME',
       action: () => { soundFx.playFanfare(); onPlay(); },
-      btnClass: 'balatro-btn-blue font-black text-lg py-3.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-lg w-full'
+      btnClass: 'balatro-btn-teal font-black text-lg py-3.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-lg w-full text-[#003c5a]'
     },
     {
       id: 'how_to_play',
       label: 'HOW TO PLAY',
       action: () => { soundFx.playClick(); onHowToPlay(); },
-      btnClass: 'balatro-btn-purple font-black text-sm py-2.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-md w-full'
+      btnClass: 'balatro-btn-cyan font-black text-sm py-2.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-md w-full'
     },
     {
       id: 'settings',
       label: 'SETTINGS',
       action: () => { soundFx.playClick(); onSettings(); },
-      btnClass: 'balatro-btn-blue font-black text-sm py-2.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-md w-full'
+      btnClass: 'balatro-btn-purple font-black text-sm py-2.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-md w-full'
     },
     {
-      id: 'display',
-      label: 'DISPLAY',
-      action: () => { soundFx.playClick(); onToggleDisplayMode(); },
-      btnClass: 'balatro-btn-purple font-black text-xs py-2.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-md w-full'
+      id: 'quit',
+      label: 'QUIT GAME',
+      action: () => {
+        soundFx.playClick();
+        handleQuit();
+      },
+      btnClass: 'balatro-btn-red font-black text-sm py-2.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-md w-full'
     }
   ];
 
@@ -97,20 +114,26 @@ export default function MainMenu({
   return (
     <div className="relative z-10 flex flex-col items-center justify-center min-h-[85vh] p-4 text-center">
       
-      {/* Top utility bar: fullscreen toggle */}
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <button
-          onClick={onToggleFullscreen}
-          className="balatro-btn-dark text-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
-          title="Toggle Fullscreen"
-        >
-          {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-        </button>
-      </div>
+      {/* Top utility bar: fullscreen symbol */}
+      {!isFullscreen && (
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+          <button
+            type="button"
+            onClick={onToggleFullscreen}
+            className="balatro-btn-dark w-10 h-10 rounded-xl flex items-center justify-center text-slate-200 cursor-pointer transition active:translate-y-0.5"
+            title="Fullscreen"
+            aria-label="Fullscreen"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Title Segment (Photoshop skewed Balatro Titan One font, 'TOP' in top-left, massive '100') */}
-      <div className="mb-8 flex flex-col items-center select-none">
-        <h1 className="arcade-skew-title">
+      <div className="mb-8 flex flex-col items-center select-none relative">
+        <h1 className="arcade-skew-title pvz-portal-pop">
           <span className="arcade-neon-top text-3xl sm:text-4xl md:text-5xl pl-1">
             TOP
           </span>
@@ -121,7 +144,7 @@ export default function MainMenu({
 
         {/* Subtitle segment with reduced compact black capsule */}
         <div className="balatro-subtitle-capsule px-4 py-1.5 rounded-full inline-flex items-center justify-center mt-5 max-w-md">
-          <p className="text-cyan-200 font-bold tracking-wider text-[10px] md:text-xs uppercase">
+          <p className="text-[#9cf6ff] font-black tracking-wider text-[10px] md:text-xs uppercase">
             Uncover hidden rankings. Outscore the competition.
           </p>
         </div>

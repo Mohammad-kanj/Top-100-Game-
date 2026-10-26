@@ -28,22 +28,22 @@ export default function WhirlpoolBackground({ dominantColor }: WhirlpoolBackgrou
   const mouseRef = useRef<{ x: number; y: number; active: boolean }>({ x: -9999, y: -9999, active: false });
   const dominantColorRef = useRef<'orange' | 'blue'>(dominantColor);
 
-  // Three arcade colors (vibrant and clear against the dark background)
-  const BLUE_COLOR = '#38bdf8';
-  const PURPLE_COLOR = '#c084fc';
-  const CYAN_COLOR = '#22d3ee';
+  // 15-color palette selection for particles
+  const MINT_BRIGHT = '#62f6bd';
+  const ICE_CYAN = '#9cf6ff';
+  const SKY_CYAN = '#00b6de';
+  const ELECTRIC_BLUE = '#107dee';
+  const SOFT_MINT = '#6ad6cd';
+  const PURE_WHITE = '#ffffff';
 
-  const pickColor = (mode: 'orange' | 'blue'): string => {
+  const pickColor = (_mode?: 'orange' | 'blue'): string => {
     const r = Math.random();
-    if (mode === 'blue') {
-      if (r < 0.65) return BLUE_COLOR;
-      if (r < 0.90) return PURPLE_COLOR;
-      return CYAN_COLOR;
-    } else {
-      if (r < 0.65) return PURPLE_COLOR;
-      if (r < 0.90) return BLUE_COLOR;
-      return CYAN_COLOR;
-    }
+    if (r < 0.30) return MINT_BRIGHT;
+    if (r < 0.52) return SKY_CYAN;
+    if (r < 0.72) return ICE_CYAN;
+    if (r < 0.86) return ELECTRIC_BLUE;
+    if (r < 0.94) return SOFT_MINT;
+    return PURE_WHITE;
   };
 
   // Trigger color change & scatter impulse whenever dominantColor changes
@@ -89,8 +89,8 @@ export default function WhirlpoolBackground({ dominantColor }: WhirlpoolBackgrou
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseleave', handleMouseLeave);
 
-    // Initialize particles once if not already initialized
-    const particleCount = 100;
+    // Initialize particles once if not already initialized (optimized for 60fps)
+    const particleCount = 110;
     const maxDist = Math.hypot(width, height) * 0.75;
     const arms = 4;
 
@@ -109,7 +109,7 @@ export default function WhirlpoolBackground({ dominantColor }: WhirlpoolBackgrou
           speed: 0.52 + Math.random() * 0.48,
           rotSpeed: 0.0036 + Math.random() * 0.0026,
           baseSize: 22 + Math.floor(Math.random() * 22),
-          baseAlpha: 0.85 + Math.random() * 0.15,
+          baseAlpha: 0.65 + Math.random() * 0.15,
           color: pickColor(dominantColorRef.current),
           repelX: 0,
           repelY: 0,
@@ -129,33 +129,19 @@ export default function WhirlpoolBackground({ dominantColor }: WhirlpoolBackgrou
       const currentMaxDist = Math.hypot(width, height) * 0.75;
       const currentMode = dominantColorRef.current;
 
-      // Darker, moodier arcade background gradient
+      // Cohesive arcade background gradient: #003c5a -> #0c1079 -> #4a089c
       const bgGrad = ctx.createRadialGradient(cx, cy, 30, cx, cy, currentMaxDist);
-      if (currentMode === 'blue') {
-        bgGrad.addColorStop(0, '#0a1a3a');    // Deep dark moody blue
-        bgGrad.addColorStop(0.35, '#061026'); // Dark navy
-        bgGrad.addColorStop(0.7, '#030818');  // Dark edge
-        bgGrad.addColorStop(1, '#01030a');    // Pitch dark edge
-      } else {
-        bgGrad.addColorStop(0, '#1c0a33');    // Deep dark moody purple
-        bgGrad.addColorStop(0.35, '#120522'); // Dark violet
-        bgGrad.addColorStop(0.7, '#090214');  // Dark edge
-        bgGrad.addColorStop(1, '#020106');    // Pitch dark edge
-      }
+      bgGrad.addColorStop(0, '#003c5a');    // Oceanic slate center
+      bgGrad.addColorStop(0.45, '#0c1079'); // Midnight royal navy
+      bgGrad.addColorStop(1, '#4a089c');    // Deep velvet purple edge
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, width, height);
 
-      // Ambient center vortex glow (subtle, moody arcade atmosphere)
+      // Ambient center vortex glow with mint neon and sky cyan
       const eyeGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 240);
-      if (currentMode === 'blue') {
-        eyeGrad.addColorStop(0, 'rgba(37, 99, 235, 0.22)');
-        eyeGrad.addColorStop(0.5, 'rgba(8, 145, 178, 0.08)');
-        eyeGrad.addColorStop(1, 'transparent');
-      } else {
-        eyeGrad.addColorStop(0, 'rgba(124, 58, 237, 0.22)');
-        eyeGrad.addColorStop(0.5, 'rgba(30, 64, 175, 0.08)');
-        eyeGrad.addColorStop(1, 'transparent');
-      }
+      eyeGrad.addColorStop(0, 'rgba(98, 246, 189, 0.25)');
+      eyeGrad.addColorStop(0.5, 'rgba(0, 182, 222, 0.12)');
+      eyeGrad.addColorStop(1, 'transparent');
       ctx.fillStyle = eyeGrad;
       ctx.beginPath();
       ctx.arc(cx, cy, 240, 0, Math.PI * 2);
@@ -276,12 +262,13 @@ export default function WhirlpoolBackground({ dominantColor }: WhirlpoolBackgrou
         const drawX = posX + p.repelX + p.scatterVx;
         const drawY = posY + p.repelY + p.scatterVy;
 
-        // Opacity without blinking: smooth distance falloff
+        // Radial opacity: higher focus on the center, low opacity at the edges
         let alpha = p.baseAlpha * alphaMultiplier;
-        if (p.dist < 90) {
-          alpha *= Math.max(0, (p.dist - 32) / 58);
-        } else if (p.dist > currentMaxDist * 0.82) {
-          alpha *= Math.max(0, 1 - (p.dist - currentMaxDist * 0.82) / (currentMaxDist * 0.18));
+        if (p.dist < 85) {
+          alpha *= Math.max(0, (p.dist - 32) / 53);
+        } else {
+          const edgeFraction = Math.min(1, Math.max(0, (p.dist - 85) / (currentMaxDist - 85)));
+          alpha *= (0.98 - edgeFraction * 0.52);
         }
 
         if (alpha <= 0.01) continue;
@@ -291,28 +278,37 @@ export default function WhirlpoolBackground({ dominantColor }: WhirlpoolBackgrou
         ctx.rotate(p.angle + Math.PI / 2);
         ctx.scale(scale, scale);
 
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = Math.min(0.95, alpha);
-        ctx.font = `bold ${p.baseSize}px 'Pixelify Sans', monospace`;
+        ctx.font = `bold ${p.baseSize}px 'Silkscreen', monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Sharp drop shadow under each number
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-        ctx.shadowBlur = 6;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        // High-performance arcade drop shadow (no expensive GPU blur calculations)
+        ctx.fillStyle = '#0c1079';
+        ctx.globalAlpha = Math.min(0.85, alpha * 0.9);
+        ctx.fillText(p.text, 2, 2);
 
+        // Vibrant foreground arcade number
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.min(0.9, alpha);
         ctx.fillText(p.text, 0, 0);
 
         if (p.effect === 'pop' || p.effect === 'whoosh') {
-          ctx.shadowColor = p.color;
-          ctx.shadowBlur = 10;
-          ctx.fillText(p.text, 0, 0);
+          ctx.fillStyle = '#ffffff';
+          ctx.globalAlpha = Math.min(0.45, alpha * 0.5);
+          ctx.fillText(p.text, -1, -1);
         }
 
         ctx.restore();
       }
+
+      // Vignette overlay: deep royal navy and purple at edges
+      const vigGrad = ctx.createRadialGradient(cx, cy, Math.min(width, height) * 0.18, cx, cy, Math.max(width, height) * 0.72);
+      vigGrad.addColorStop(0, 'rgba(12, 16, 121, 0.20)');
+      vigGrad.addColorStop(0.45, 'rgba(12, 16, 121, 0.50)');
+      vigGrad.addColorStop(0.75, 'rgba(74, 8, 156, 0.80)');
+      vigGrad.addColorStop(1, 'rgba(74, 8, 156, 0.96)');
+      ctx.fillStyle = vigGrad;
+      ctx.fillRect(0, 0, width, height);
 
       animationFrameId = requestAnimationFrame(render);
     };

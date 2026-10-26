@@ -9,7 +9,7 @@ interface HostOverrideModalProps {
 }
 
 export default function HostOverrideModal({ gameState, onOverride, onClose }: HostOverrideModalProps): React.JSX.Element {
-  const [selectedAction, setSelectedAction] = useState<'reveal' | 'score' | 'strike' | 'controls'>('reveal');
+  const [selectedAction, setSelectedAction] = useState<'reveal' | 'score' | 'controls'>('reveal');
   const [tileNumber, setTileNumber] = useState<string>('');
   const [targetTeam, setTargetTeam] = useState<number>(0);
   const [statusMsg, setStatusMsg] = useState<string>('');
@@ -43,20 +43,10 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
     setStatusMsg(`Adjusted ${teams[targetTeam]}'s score by ${delta > 0 ? `+${delta}` : delta}`);
   };
 
-  const handleStrike = async (delta: number): Promise<void> => {
-    soundFx.playClick();
-    await onOverride({
-      action: 'strike',
-      team_index: targetTeam,
-      delta: delta
-    });
-    setStatusMsg(`Adjusted ${teams[targetTeam]}'s strikes by ${delta > 0 ? `+${delta}` : delta}`);
-  };
-
   const handleSkipTurn = async (): Promise<void> => {
     soundFx.playClick();
     await onOverride({ action: 'skip_turn' });
-    setStatusMsg('Turn passed without penalty.');
+    setStatusMsg('Turn passed.');
   };
 
   const handleFinishRound = async (): Promise<void> => {
@@ -70,42 +60,42 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
       <div className="balatro-modal rounded-3xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="bg-[#1a1442] border-b-2 border-[#2b2164] p-5 flex items-center justify-between">
+        <div className="bg-[#003c5a] border-b-2 border-[#0071b4] p-5 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-black text-white tracking-wide uppercase drop-shadow-[0_2px_0_#0d0924]">
+            <h2 className="text-xl font-black text-white tracking-wide uppercase drop-shadow-[0_2px_0_#0c1079]">
               Host Console
             </h2>
-            <div className="text-[11px] font-mono text-purple-300/80 font-bold">Shortcut: Ctrl + Shift + H</div>
+            <div className="text-[11px] font-mono text-[#9cf6ff]/80 font-bold">Shortcut: Ctrl + Shift + H</div>
           </div>
           <button 
             onClick={() => { soundFx.playClick(); onClose(); }}
-            className="text-purple-300 hover:text-white hover:bg-white/10 rounded-xl w-8 h-8 flex items-center justify-center transition font-black text-sm cursor-pointer"
+            className="text-[#9cf6ff] hover:text-[#62f6bd] hover:bg-white/10 rounded-xl w-8 h-8 flex items-center justify-center transition font-black text-sm cursor-pointer"
           >
             ✕
           </button>
         </div>
 
         {/* Action Selector */}
-        <div className="flex border-b-2 border-[#2b2164] bg-[#140f35]">
-          {(['reveal', 'score', 'strike', 'controls'] as const).map((tab) => (
+        <div className="flex border-b-2 border-[#0071b4] bg-[#0c1079]">
+          {(['reveal', 'score', 'controls'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => { soundFx.playClick(); setSelectedAction(tab); setStatusMsg(''); }}
               className={`flex-1 py-3 text-xs font-black tracking-wider transition-all border-b-4 cursor-pointer ${
                 selectedAction === tab
-                  ? 'border-purple-400 text-white bg-[#261c5c] shadow-[inset_0_2px_0_rgba(255,255,255,0.2)]'
-                  : 'border-transparent text-purple-200/60 hover:text-white'
+                  ? 'border-[#62f6bd] text-[#62f6bd] bg-[#3120cd] shadow-[inset_0_2px_0_rgba(98,246,189,0.3)]'
+                  : 'border-transparent text-[#6ad6cd] hover:text-white'
               }`}
             >
-              {tab === 'reveal' ? 'REVEAL TILE' : tab === 'score' ? 'ADJUST SCORE' : tab === 'strike' ? 'STRIKES' : 'ROUND TOOLS'}
+              {tab === 'reveal' ? 'REVEAL TILE' : tab === 'score' ? 'ADJUST SCORE' : 'ROUND TOOLS'}
             </button>
           ))}
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-4 text-purple-100 text-sm">
+        <div className="p-6 overflow-y-auto space-y-4 text-[#9cf6ff] text-sm">
           {statusMsg && (
-            <div className="p-2.5 rounded-xl bg-blue-950/60 border-2 border-blue-600/70 text-blue-200 font-black text-xs text-center animate-in fade-in shadow-[0_2px_0_rgba(0,0,0,0.4)]">
+            <div className="p-2.5 rounded-xl bg-[#003c5a] border-2 border-[#0071b4] text-[#62f6bd] font-black text-xs text-center animate-in fade-in shadow-[0_2px_0_#0c1079]">
               {statusMsg}
             </div>
           )}
@@ -114,7 +104,7 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
           {selectedAction === 'reveal' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-purple-300 uppercase mb-1">
+                <label className="block text-xs font-black text-[#9cf6ff] uppercase mb-1">
                   Tile Rank to Reveal (1 to 100):
                 </label>
                 <input
@@ -124,18 +114,18 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
                   value={tileNumber}
                   onChange={(e) => setTileNumber(e.target.value)}
                   placeholder="e.g. 1"
-                  className="w-full bg-[#130f2f] border-2 border-[#3d2c70] border-b-4 border-b-[#1f153f] focus:border-purple-400 text-white px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                  className="w-full bg-[#003c5a] border-2 border-[#0071b4] border-b-4 border-b-[#0c1079] focus:border-[#62f6bd] text-[#62f6bd] px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(12,16,121,0.5)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-purple-300 uppercase mb-1">
+                <label className="block text-xs font-black text-[#9cf6ff] uppercase mb-1">
                   Award Points to Team:
                 </label>
                 <select
                   value={targetTeam}
                   onChange={(e) => setTargetTeam(parseInt(e.target.value, 10))}
-                  className="w-full bg-[#130f2f] border-2 border-[#3d2c70] border-b-4 border-b-[#1f153f] focus:border-purple-400 text-white px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                  className="w-full bg-[#003c5a] border-2 border-[#0071b4] border-b-4 border-b-[#0c1079] focus:border-[#62f6bd] text-[#62f6bd] px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(12,16,121,0.5)]"
                 >
                   {teams.map((t, idx) => (
                     <option key={idx} value={idx}>{t}</option>
@@ -146,7 +136,7 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
               <button
                 type="button"
                 onClick={handleReveal}
-                className="w-full balatro-btn-purple text-white font-black py-3 rounded-xl transition tracking-wide uppercase text-xs cursor-pointer mt-2"
+                className="w-full balatro-btn-blue text-white font-black py-3 rounded-xl transition tracking-wide uppercase text-xs cursor-pointer mt-2"
               >
                 Reveal Tile
               </button>
@@ -157,13 +147,13 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
           {selectedAction === 'score' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-purple-300 uppercase mb-1">
+                <label className="block text-xs font-black text-[#9cf6ff] uppercase mb-1">
                   Target Team:
                 </label>
                 <select
                   value={targetTeam}
                   onChange={(e) => setTargetTeam(parseInt(e.target.value, 10))}
-                  className="w-full bg-[#130f2f] border-2 border-[#3d2c70] border-b-4 border-b-[#1f153f] focus:border-purple-400 text-white px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                  className="w-full bg-[#003c5a] border-2 border-[#0071b4] border-b-4 border-b-[#0c1079] focus:border-[#62f6bd] text-[#62f6bd] px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(12,16,121,0.5)]"
                 >
                   {teams.map((t, idx) => (
                     <option key={idx} value={idx}>
@@ -184,50 +174,11 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
                     key={d}
                     type="button"
                     onClick={() => handleScore(d)}
-                    className="balatro-btn-dark py-3 rounded-xl font-black text-xs text-white transition cursor-pointer"
+                    className="balatro-btn-dark py-3 rounded-xl font-black text-xs text-[#9cf6ff] hover:text-[#62f6bd] transition cursor-pointer"
                   >
                     {label}
                   </button>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {/* Forgive / Adjust Strike Tab */}
-          {selectedAction === 'strike' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-black text-purple-300 uppercase mb-1">
-                  Target Team:
-                </label>
-                <select
-                  value={targetTeam}
-                  onChange={(e) => setTargetTeam(parseInt(e.target.value, 10))}
-                  className="w-full bg-[#130f2f] border-2 border-[#3d2c70] border-b-4 border-b-[#1f153f] focus:border-purple-400 text-white px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
-                >
-                  {teams.map((t, idx) => (
-                    <option key={idx} value={idx}>
-                      {t} (Strikes: {gameState.strikes[idx] || 0})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => handleStrike(-1)}
-                  className="flex-1 balatro-btn-blue text-white py-3 rounded-xl font-black transition text-xs cursor-pointer"
-                >
-                  -1 Strike (Forgive)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleStrike(1)}
-                  className="flex-1 balatro-btn-purple bg-rose-600 hover:bg-rose-500 border-rose-950 border-b-rose-950 shadow-[0_4px_0_#3f0714] text-white py-3 rounded-xl font-black transition text-xs cursor-pointer"
-                >
-                  +1 Strike
-                </button>
               </div>
             </div>
           )}
@@ -238,14 +189,14 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
               <button
                 type="button"
                 onClick={handleSkipTurn}
-                className="w-full balatro-btn-dark py-3 rounded-xl font-black transition text-xs cursor-pointer"
+                className="w-full balatro-btn-dark py-3 rounded-xl font-black transition text-xs cursor-pointer text-[#9cf6ff]"
               >
-                Skip Turn Without Strike
+                Skip Turn
               </button>
               <button
                 type="button"
                 onClick={handleFinishRound}
-                className="w-full balatro-btn-purple bg-rose-600 hover:bg-rose-500 border-rose-950 border-b-rose-950 shadow-[0_4px_0_#3f0714] text-white py-3 rounded-xl font-black transition text-xs cursor-pointer"
+                className="w-full balatro-btn-red text-white py-3 rounded-xl font-black transition text-xs cursor-pointer"
               >
                 Force End Round Now
               </button>
@@ -254,10 +205,10 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#1a1442] border-t-2 border-[#2b2164] flex justify-end">
+        <div className="p-4 bg-[#003c5a] border-t-2 border-[#0071b4] flex justify-end">
           <button
             onClick={() => { soundFx.playClick(); onClose(); }}
-            className="balatro-btn-dark px-6 py-2.5 rounded-xl text-purple-200 font-black transition text-sm cursor-pointer"
+            className="balatro-btn-primary px-6 py-2.5 rounded-xl text-[#003c5a] font-black transition text-sm cursor-pointer"
           >
             Close
           </button>

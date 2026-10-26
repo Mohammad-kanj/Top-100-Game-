@@ -42,27 +42,27 @@ export default function TeamsModal({ teams, onSave, onClose }: TeamsModalProps):
       <div className="balatro-modal rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="bg-[#1a1442] border-b-2 border-[#2b2164] p-5 flex items-center justify-between">
-          <h2 className="text-xl font-black text-white tracking-wide uppercase drop-shadow-[0_2px_0_#0d0924]">
+        <div className="bg-[#003c5a] border-b-2 border-[#0071b4] p-5 flex items-center justify-between">
+          <h2 className="text-xl font-black text-white tracking-wide uppercase drop-shadow-[0_2px_0_#0c1079]">
             Team Setup
           </h2>
           <button 
             onClick={() => { soundFx.playClick(); onClose(); }}
-            className="text-purple-300 hover:text-white hover:bg-white/10 rounded-xl w-8 h-8 flex items-center justify-center transition font-black text-sm cursor-pointer"
+            className="text-[#9cf6ff] hover:text-[#62f6bd] hover:bg-white/10 rounded-xl w-8 h-8 flex items-center justify-center transition font-black text-sm cursor-pointer"
           >
             ✕
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-3 text-purple-100">
-          <div className="text-xs text-purple-300 font-black uppercase tracking-wider mb-2">
+        <div className="p-6 overflow-y-auto space-y-3 text-[#9cf6ff]">
+          <div className="text-xs text-[#9cf6ff] font-black uppercase tracking-wider mb-2">
             Participating Teams (1 to 8 teams)
           </div>
 
           {localTeams.map((team, idx) => (
             <div key={idx} className="flex items-center gap-2">
-              <span className="w-7 text-center font-black text-xs text-purple-300">
+              <span className="w-7 text-center font-black text-xs text-[#62f6bd]">
                 #{idx + 1}
               </span>
               <input
@@ -71,7 +71,7 @@ export default function TeamsModal({ teams, onSave, onClose }: TeamsModalProps):
                 onChange={(e) => updateName(idx, e.target.value)}
                 placeholder={`Team ${idx + 1}`}
                 maxLength={24}
-                className="flex-1 bg-[#130f2f] border-2 border-[#3d2c70] border-b-4 border-b-[#1f153f] focus:border-purple-400 text-white px-3.5 py-2.5 rounded-xl font-black outline-none text-sm transition shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                className="flex-1 bg-[#003c5a] border-2 border-[#0071b4] border-b-4 border-b-[#0c1079] focus:border-[#62f6bd] text-[#62f6bd] placeholder-[#6ad6cd]/50 px-3.5 py-2.5 rounded-xl font-black outline-none text-sm transition shadow-[inset_0_2px_4px_rgba(12,16,121,0.5)]"
               />
               {localTeams.length > 1 && (
                 <button
@@ -90,7 +90,7 @@ export default function TeamsModal({ teams, onSave, onClose }: TeamsModalProps):
             <button
               type="button"
               onClick={addTeam}
-              className="w-full mt-2 py-3 rounded-xl border-2 border-dashed border-[#473496] hover:border-purple-400 text-purple-200 font-black text-xs uppercase tracking-wider bg-[#1a1442] hover:bg-[#251d5c] transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+              className="w-full mt-2 py-3 rounded-xl border-2 border-dashed border-[#0071b4] hover:border-[#62f6bd] text-[#9cf6ff] hover:text-[#62f6bd] font-black text-xs uppercase tracking-wider bg-[#3120cd]/50 hover:bg-[#3120cd] transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
             >
               Add Another Team
             </button>
@@ -98,16 +98,16 @@ export default function TeamsModal({ teams, onSave, onClose }: TeamsModalProps):
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#1a1442] border-t-2 border-[#2b2164] flex justify-between gap-3">
+        <div className="p-4 bg-[#003c5a] border-t-2 border-[#0071b4] flex justify-between gap-3">
           <button
             onClick={() => { soundFx.playClick(); onClose(); }}
-            className="balatro-btn-dark px-5 py-2.5 rounded-xl text-purple-200 font-black transition text-sm cursor-pointer"
+            className="balatro-btn-dark px-5 py-2.5 rounded-xl text-[#9cf6ff] font-black transition text-sm cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="balatro-btn-white font-black px-7 py-2.5 rounded-xl transition tracking-wide text-sm cursor-pointer"
+            className="balatro-btn-primary font-black px-7 py-2.5 rounded-xl transition tracking-wide text-sm cursor-pointer text-[#003c5a]"
           >
             Save Teams
           </button>

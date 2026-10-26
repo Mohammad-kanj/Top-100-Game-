@@ -1,201 +1,247 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Titan+One&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { @apply font-sans; }
+}
+
+
+
+@theme {
+  --font-sans: 'Silkscreen', cursive, sans-serif;
+  --font-mono: 'Silkscreen', monospace, sans-serif;
+  --font-silkscreen: 'Silkscreen', monospace, sans-serif;
+
+  /* 15-Color Palette */
+  --color-mint-bright: #62f6bd;
+  --color-emerald: #10aa83;
+  --color-forest-teal: #087d6a;
+  --color-ocean-slate: #003c5a;
+  --color-ice-cyan: #9cf6ff;
+  --color-sky-cyan: #00b6de;
+  --color-marine-blue: #0071b4;
+  --color-midnight-navy: #0c1079;
+  --color-soft-mint: #6ad6cd;
+  --color-electric-blue: #107dee;
+  --color-cobalt: #3120cd;
+  --color-velvet-purple: #4a089c;
+  --color-periwinkle: #787bd1;
+  --color-royal-violet: #4a34de;
+  --color-steel-slate: #4d6b75;
+}
+
+/* Force Silkscreen font globally across all text, inputs, buttons, and elements */
+*, *::before, *::after, html, body, input, button, select, textarea {
+  font-family: 'Silkscreen', 'Pixelify Sans', "Apple Color Emoji", "Segoe UI Emoji", sans-serif !important;
+}
+
+/* Strictly reserve Titan One for the massive arcade neon title */
+.arcade-neon-top,
+.arcade-neon-100,
+.balatro-title-text {
+  font-family: 'Titan One', 'Impact', cursive, sans-serif !important;
+}
 
 @layer base {
   body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-    background-color: #06030c;
+    background-color: #0c1079;
     color: #ffffff;
-    font-family: 'Pixelify Sans', 'Press Start 2P', monospace, sans-serif;
+  }
+  button, input, select, textarea {
+    font-family: inherit;
   }
 }
 
-/* Arcade Tactile Slabs: Distinct Drop Shadows & Inner Highlights */
+/* ========================================================= */
+/* ARCADE TACTILE SLABS & PANELS (Multi-Tone Cohesive Layering)*/
+/* ========================================================= */
+
 .balatro-card {
-  background: #14112e;
-  border: 2px solid #2e265c;
-  box-shadow: 0 4px 0 #000000, inset 0 1.5px 0 rgba(255, 255, 255, 0.2);
+  background: #003c5a;
+  border: 2px solid #787bd1;
+  box-shadow: 0 4px 0 #0c1079, inset 0 1.5px 0 rgba(156, 246, 255, 0.2);
 }
 
 .balatro-card-interactive {
-  background: #14112e;
-  border: 2px solid #2e265c;
-  box-shadow: 0 4px 0 #000000, inset 0 1.5px 0 rgba(255, 255, 255, 0.2);
+  background: #003c5a;
+  border: 2px solid #787bd1;
+  box-shadow: 0 4px 0 #0c1079, inset 0 1.5px 0 rgba(156, 246, 255, 0.2);
   transition: all 0.08s ease;
 }
 .balatro-card-interactive:hover {
   transform: translateY(-2px);
-  border-color: #38bdf8;
-  box-shadow: 0 6px 0 #000000, inset 0 1.5px 0 rgba(255, 255, 255, 0.3);
+  border-color: #62f6bd;
+  box-shadow: 0 6px 0 #0c1079, inset 0 1.5px 0 rgba(98, 246, 189, 0.45);
 }
 .balatro-card-interactive:active {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 #000000;
+  box-shadow: 0 2px 0 #0c1079;
 }
 
 /* Balatro Panel and Modal Depth */
 .balatro-panel {
-  background: #100d26;
-  border: 2.5px solid #2d2358;
-  box-shadow: 0 8px 0 #000000, inset 0 2px 0 rgba(255, 255, 255, 0.15);
+  background: #003c5a;
+  border: 2.5px solid #0071b4;
+  box-shadow: 0 8px 0 #0c1079, inset 0 2px 0 rgba(156, 246, 255, 0.25);
 }
 
 .balatro-modal {
-  background: #110d29;
-  border: 3px solid #362a69;
-  box-shadow: 0 12px 0 #000000, inset 0 2px 0 rgba(255, 255, 255, 0.16);
+  background: #0c1079;
+  border: 3px solid #787bd1;
+  box-shadow: 0 12px 0 #4a089c, inset 0 2px 0 rgba(156, 246, 255, 0.3);
 }
 
 /* ========================================================= */
 /* CHUNKY PHYSICAL ARCADE BUTTONS                            */
-/* Solid base colors, crisp top highlight, hard 0px shadow  */
+/* Distinct function colors with crisp top highlight & slabs */
 /* ========================================================= */
 
+/* Mint Neon Primary Button (#62f6bd) */
+.balatro-btn-teal {
+  background: #62f6bd;
+  border: 2px solid #087d6a;
+  border-top: 2.5px solid #ffffff;
+  color: #003c5a;
+  font-weight: 900;
+  box-shadow: inset 0 2px 0 #ffffff, 0 5px 0 #087d6a;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+}
+.balatro-btn-teal:hover {
+  background: #62f6bd;
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 0 #ffffff, 0 6px 0 #087d6a;
+}
+.balatro-btn-teal:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 0 #087d6a;
+}
+
+/* Sky Cyan Button (#00b6de) */
+.balatro-btn-cyan {
+  background: #00b6de;
+  border: 2px solid #003c5a;
+  border-top: 2.5px solid #9cf6ff;
+  color: #0c1079;
+  font-weight: 900;
+  box-shadow: inset 0 2px 0 rgba(156, 246, 255, 0.6), 0 5px 0 #003c5a;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+}
+.balatro-btn-cyan:hover {
+  background: #00b6de;
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 0 rgba(156, 246, 255, 0.8), 0 6px 0 #003c5a;
+}
+.balatro-btn-cyan:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(156, 246, 255, 0.3), 0 2px 0 #003c5a;
+}
+
+/* Electric Azure Button (#107dee) */
 .balatro-btn-blue {
-  background: #1d4ed8;
-  border: 2px solid #000000;
-  border-top: 2.5px solid rgba(255, 255, 255, 0.65);
+  background: #107dee;
+  border: 2px solid #0c1079;
+  border-top: 2.5px solid #9cf6ff;
   color: #ffffff;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
+  box-shadow: inset 0 2px 0 rgba(156, 246, 255, 0.45), 0 5px 0 #0c1079;
   transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
 }
 .balatro-btn-blue:hover {
-  background: #2563eb;
-  filter: brightness(1.1);
+  background: #107dee;
+  filter: brightness(1.15);
   transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
+  box-shadow: inset 0 2px 0 rgba(156, 246, 255, 0.7), 0 6px 0 #0c1079;
 }
 .balatro-btn-blue:active {
   transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
+  box-shadow: inset 0 1px 0 rgba(156, 246, 255, 0.25), 0 2px 0 #0c1079;
 }
 
+/* Royal Violet Button (#4a34de) */
 .balatro-btn-purple {
-  background: #7c3aed;
-  border: 2px solid #000000;
-  border-top: 2.5px solid rgba(255, 255, 255, 0.65);
+  background: #4a34de;
+  border: 2px solid #0c1079;
+  border-top: 2.5px solid #787bd1;
   color: #ffffff;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
+  box-shadow: inset 0 2px 0 rgba(120, 123, 209, 0.35), 0 5px 0 #4a089c;
   transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
 }
 .balatro-btn-purple:hover {
-  background: #8b5cf6;
-  filter: brightness(1.1);
+  background: #4a34de;
+  filter: brightness(1.15);
   transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
+  box-shadow: inset 0 2px 0 rgba(120, 123, 209, 0.6), 0 6px 0 #4a089c;
 }
 .balatro-btn-purple:active {
   transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
+  box-shadow: inset 0 1px 0 rgba(120, 123, 209, 0.2), 0 2px 0 #4a089c;
 }
 
+/* Dark Oceanic Slate Button (#003c5a) */
 .balatro-btn-dark {
-  background: #181135;
-  border: 2px solid #000000;
-  border-top: 2px solid rgba(255, 255, 255, 0.3);
-  color: #e2e8f0;
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.2), 0 4px 0 #000000;
+  background: #003c5a;
+  border: 2px solid #0c1079;
+  border-top: 2px solid #0071b4;
+  color: #9cf6ff;
+  box-shadow: inset 0 1.5px 0 rgba(156, 246, 255, 0.25), 0 4px 0 #0c1079;
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 .balatro-btn-dark:hover {
-  background: #241a4d;
+  background: #003c5a;
+  filter: brightness(1.18);
+  border-color: #62f6bd;
   transform: translateY(-1px);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.3), 0 5px 0 #000000;
+  box-shadow: inset 0 1.5px 0 rgba(98, 246, 189, 0.45), 0 5px 0 #0c1079;
 }
 .balatro-btn-dark:active {
   transform: translateY(2px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 2px 0 #000000;
+  box-shadow: inset 0 1px 0 rgba(98, 246, 189, 0.15), 0 2px 0 #0c1079;
 }
 
+/* Ice White Button (#9cf6ff) */
 .balatro-btn-white {
-  background: #f8fafc;
-  border: 2px solid #000000;
+  background: #9cf6ff;
+  border: 2px solid #0071b4;
   border-top: 2.5px solid #ffffff;
-  color: #0f172a;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.95), 0 5px 0 #000000;
+  color: #0c1079;
+  font-weight: 900;
+  box-shadow: inset 0 2px 0 #ffffff, 0 5px 0 #0071b4;
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 .balatro-btn-white:hover {
-  background: #ffffff;
+  background: #9cf6ff;
+  filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 1), 0 6px 0 #000000;
+  box-shadow: inset 0 2px 0 #ffffff, 0 6px 0 #0071b4;
 }
 .balatro-btn-white:active {
   transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 0 #000000;
+  box-shadow: inset 0 1px 0 rgba(12, 16, 121, 0.35), 0 2px 0 #0c1079;
 }
 
+/* Red Button (for Quit / Delete) */
 .balatro-btn-red {
-  background: #dc2626;
-  border: 2px solid #000000;
+  background: #b91c1c;
+  border: 2px solid #0c1079;
   border-top: 2.5px solid rgba(255, 255, 255, 0.6);
   color: #ffffff;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #0c1079;
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 .balatro-btn-red:hover {
-  background: #ef4444;
+  background: #dc2626;
   transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #0c1079;
 }
 .balatro-btn-red:active {
   transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
-}
-
-.balatro-btn-green {
-  background: #16a34a;
-  border: 2px solid #000000;
-  border-top: 2.5px solid rgba(255, 255, 255, 0.6);
-  color: #ffffff;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-}
-.balatro-btn-green:hover {
-  background: #22c55e;
-  transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
-}
-.balatro-btn-green:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
-}
-
-.balatro-btn-orange {
-  background: #ea580c;
-  border: 2px solid #000000;
-  border-top: 2.5px solid rgba(255, 255, 255, 0.6);
-  color: #ffffff;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #000000;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-}
-.balatro-btn-orange:hover {
-  background: #f97316;
-  transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #000000;
-}
-.balatro-btn-orange:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
-}
-
-.balatro-btn-yellow {
-  background: #ca8a04;
-  border: 2px solid #000000;
-  border-top: 2.5px solid rgba(255, 255, 255, 0.6);
-  color: #1e1b4b;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 5px 0 #000000;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-}
-.balatro-btn-yellow:hover {
-  background: #eab308;
-  transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7), 0 6px 0 #000000;
-}
-.balatro-btn-yellow:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #000000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #0c1079;
 }
 
 /* ========================================================= */
@@ -211,43 +257,148 @@
   transform-origin: center bottom;
 }
 
+/* ========================================================= */
+/* PVZGW2 PORTAL LIGHTNING POP EFFECT FOR TOP 100            */
+/* ========================================================= */
+
+.pvz-portal-pop {
+  animation: pvz-portal-lightning-pop 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+             pvz-portal-electric-idle 5s ease-in-out infinite 0.75s;
+  transform-origin: center center;
+}
+
+@keyframes pvz-portal-lightning-pop {
+  0% {
+    transform: scale(0.25) skewX(-12deg);
+    opacity: 0;
+    filter: brightness(4) drop-shadow(0 0 40px #ffffff) drop-shadow(0 0 80px #62f6bd);
+  }
+  40% {
+    transform: scale(1.15) skewX(-12deg);
+    opacity: 1;
+    filter: brightness(2.2) drop-shadow(0 0 60px #62f6bd) drop-shadow(0 0 100px #00b6de);
+  }
+  70% {
+    transform: scale(0.96) skewX(-12deg);
+    filter: brightness(1.3) drop-shadow(0 0 30px #3120cd);
+  }
+  85% {
+    transform: scale(1.03) skewX(-12deg);
+    filter: brightness(1.15) drop-shadow(0 0 24px #9cf6ff);
+  }
+  100% {
+    transform: scale(1) skewX(-12deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes pvz-portal-electric-idle {
+  0%, 100% {
+    filter: drop-shadow(0 0 16px rgba(98, 246, 189, 0.6));
+  }
+  48% {
+    filter: drop-shadow(0 0 16px rgba(98, 246, 189, 0.6));
+  }
+  50% {
+    filter: brightness(1.8) drop-shadow(0 0 40px #ffffff) drop-shadow(0 0 65px #62f6bd);
+  }
+  52% {
+    filter: brightness(1.1) drop-shadow(0 0 20px #00b6de);
+  }
+  54% {
+    filter: brightness(1.6) drop-shadow(0 0 35px #ffffff) drop-shadow(0 0 55px #9cf6ff);
+  }
+  57% {
+    filter: drop-shadow(0 0 16px rgba(98, 246, 189, 0.6));
+  }
+}
+
 .arcade-neon-top {
-  font-family: 'Titan One', 'Impact', cursive, sans-serif;
+  font-family: 'Titan One', 'Impact', cursive, sans-serif !important;
   text-transform: uppercase;
-  color: #bae6fd;
+  color: #9cf6ff;
   letter-spacing: 0.12em;
   text-shadow:
     0 0 3px #ffffff,
-    0 0 8px #38bdf8,
-    0 0 16px #0284c7,
-    2px 3px 0 #000000;
+    0 0 10px #62f6bd,
+    0 0 22px #00b6de,
+    2px 3px 0 #0c1079;
 }
 
 .arcade-neon-100 {
-  font-family: 'Titan One', 'Impact', cursive, sans-serif;
+  font-family: 'Titan One', 'Impact', cursive, sans-serif !important;
   color: #ffffff;
   letter-spacing: -0.02em;
   line-height: 0.88;
   text-shadow:
     0 0 3px #ffffff,
-    0 0 8px #38bdf8,
-    0 0 18px #0284c7,
-    0 0 30px #7c3aed,
-    4px 5px 0 #000000;
+    0 0 12px #62f6bd,
+    0 0 24px #00b6de,
+    0 0 40px #3120cd,
+    4px 5px 0 #0c1079;
 }
 
 /* Fallback legacy title class */
 .balatro-title-text {
-  font-family: 'Titan One', 'Impact', cursive, sans-serif;
+  font-family: 'Titan One', 'Impact', cursive, sans-serif !important;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: #ffffff;
   transform: skewX(-12deg);
   text-shadow:
     0 0 3px #ffffff,
-    0 0 8px #38bdf8,
-    0 0 18px #0284c7,
-    3px 3px 0 #000000;
+    0 0 10px #62f6bd,
+    0 0 22px #00b6de,
+    3px 3px 0 #0c1079;
+}
+
+/* ========================================================= */
+/* BALATRO-STYLE LOADING SCREEN (3D WOBBLE & ARCADE PROGRESS)*/
+/* ========================================================= */
+
+.balatro-loading-wobble {
+  animation: balatro-card-float 2.2s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes balatro-card-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(-1.5deg) scale(1);
+    filter: drop-shadow(0 15px 25px rgba(98, 246, 189, 0.45));
+  }
+  25% {
+    transform: translateY(-8px) rotate(2deg) scale(1.03);
+    filter: drop-shadow(0 25px 35px rgba(0, 182, 222, 0.55));
+  }
+  50% {
+    transform: translateY(-2px) rotate(-1deg) scale(0.99);
+    filter: drop-shadow(0 18px 28px rgba(49, 32, 205, 0.5));
+  }
+  75% {
+    transform: translateY(-10px) rotate(1.5deg) scale(1.02);
+    filter: drop-shadow(0 22px 32px rgba(156, 246, 255, 0.55));
+  }
+}
+
+.balatro-loading-bar {
+  animation: balatro-bar-progress 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: left center;
+}
+
+@keyframes balatro-bar-progress {
+  0% {
+    width: 5%;
+    transform: translateX(0%);
+  }
+  50% {
+    width: 75%;
+    transform: translateX(25%);
+  }
+  100% {
+    width: 30%;
+    transform: translateX(220%);
+  }
 }
 
 /* ========================================================= */
@@ -257,22 +408,22 @@
 @keyframes cloud-half-pulse-left {
   0% {
     transform: translateX(0px) scale(0.96);
-    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+    filter: drop-shadow(0 0 6px rgba(98, 246, 189, 0.8));
   }
   100% {
     transform: translateX(-5px) scale(1.06);
-    filter: drop-shadow(0 0 14px rgba(168, 85, 247, 0.9));
+    filter: drop-shadow(0 0 14px rgba(0, 182, 222, 0.95));
   }
 }
 
 @keyframes cloud-half-pulse-right {
   0% {
     transform: translateX(0px) scale(0.96);
-    filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.7));
+    filter: drop-shadow(0 0 6px rgba(98, 246, 189, 0.8));
   }
   100% {
     transform: translateX(5px) scale(1.06);
-    filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.9));
+    filter: drop-shadow(0 0 14px rgba(0, 182, 222, 0.95));
   }
 }
 
@@ -286,7 +437,7 @@
 
 /* Clean, un-boxed Hollow Knight Menu Item */
 .hk-menu-item {
-  font-family: 'Titan One', 'Pixelify Sans', cursive, sans-serif;
+  font-family: 'Silkscreen', monospace, sans-serif !important;
   background: transparent;
   border: none;
   outline: none;
@@ -295,7 +446,7 @@
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
-  color: rgba(226, 232, 240, 0.7);
+  color: rgba(156, 246, 255, 0.85);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85);
 }
 
@@ -305,38 +456,43 @@
   transform: scale(1.1);
   text-shadow:
     0 0 8px #ffffff,
-    0 0 16px #38bdf8,
-    0 0 28px #818cf8 !important;
+    0 0 16px #62f6bd,
+    0 0 28px #00b6de !important;
 }
 
-/* Smooth black outline pill for the subtitle segment */
+/* Subtitle segment capsule */
 .balatro-subtitle-capsule {
-  background: rgba(0, 0, 0, 0.9);
-  border: 2px solid #000000;
+  background: rgba(0, 60, 90, 0.85);
+  border: 2px solid #787bd1;
   box-shadow: 
-    0 4px 14px rgba(0, 0, 0, 0.9), 
-    0 0 14px rgba(139, 92, 246, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 4px 14px rgba(12, 16, 121, 0.9), 
+    0 0 14px rgba(98, 246, 189, 0.25),
+    inset 0 1px 0 rgba(156, 246, 255, 0.3);
 }
 
-/* Number Tiles Depth */
+/* ========================================================= */
+/* NUMBER TILES DEPTH (#003c5a Unrevealed, #62f6bd Revealed) */
+/* ========================================================= */
+
 .balatro-tile-unrevealed {
-  background: #151136;
-  border: 1.5px solid #281f57;
-  border-bottom: 3.5px solid #0a081a;
-  box-shadow: 0 3px 0 #05040e, inset 0 1.5px 0 rgba(255, 255, 255, 0.12);
+  background: #003c5a;
+  border: 1.5px solid #4d6b75;
+  border-bottom: 3.5px solid #0c1079;
+  box-shadow: 0 3px 0 #0c1079, inset 0 1.5px 0 rgba(156, 246, 255, 0.16);
   transition: transform 0.1s ease, border-color 0.1s ease;
 }
 .balatro-tile-unrevealed:hover {
   transform: translateY(-2px);
-  border-color: #0091ff;
+  border-color: #62f6bd;
+  box-shadow: 0 4px 0 #0c1079, inset 0 1.5px 0 rgba(98, 246, 189, 0.35);
 }
 
 .balatro-tile-revealed {
-  background: #ffffff;
-  border: 1.5px solid #0f172a;
-  border-bottom: 3.5px solid #020617;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45), inset 0 1.5px 0 rgba(255, 255, 255, 0.9);
+  background: #62f6bd;
+  border: 1.5px solid #10aa83;
+  border-bottom: 3.5px solid #087d6a;
+  box-shadow: 0 3px 0 #0c1079, inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
+  color: #003c5a;
 }
 
 /* ========================================================= */
@@ -346,34 +502,36 @@
 /* ========================================================= */
 
 .neon-guesser-highlight {
-  border: 2.5px solid #ffffff !important;
+  border: 3px solid #62f6bd !important;
+  border-radius: 1rem !important;
   box-shadow: 
-    0 0 20px rgba(255, 106, 0, 0.95),
-    0 0 40px rgba(0, 145, 255, 0.75),
-    inset 0 0 12px rgba(255, 255, 255, 0.4) !important;
-  animation: guesser-pulse 1.8s ease-in-out infinite;
+    0 0 18px rgba(98, 246, 189, 0.95),
+    0 0 35px rgba(0, 182, 222, 0.5),
+    inset 0 0 10px rgba(98, 246, 189, 0.3) !important;
+  animation: guesser-pulse 2s ease-in-out infinite;
   z-index: 20;
+  overflow: hidden;
 }
 
 @keyframes guesser-pulse {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(255, 106, 0, 0.95), 0 0 40px rgba(0, 145, 255, 0.75), inset 0 0 12px rgba(255, 255, 255, 0.4);
-    transform: scale(1.04);
+    box-shadow: 0 0 14px rgba(98, 246, 189, 0.85), 0 0 28px rgba(0, 182, 222, 0.45), inset 0 0 8px rgba(98, 246, 189, 0.25);
+    border-color: #62f6bd;
   }
   50% {
-    box-shadow: 0 0 30px rgba(255, 138, 0, 1), 0 0 55px rgba(56, 189, 248, 0.9), inset 0 0 18px rgba(255, 255, 255, 0.6);
-    transform: scale(1.07);
+    box-shadow: 0 0 26px rgba(255, 255, 255, 1), 0 0 48px rgba(156, 246, 255, 0.85), inset 0 0 14px rgba(98, 246, 189, 0.5);
+    border-color: #9cf6ff;
   }
 }
 
 .neon-last-guessed-tile {
   background: #ffffff !important;
-  border: 2px solid #ffffff !important;
-  color: #0f172a !important;
+  border: 2px solid #62f6bd !important;
+  color: #003c5a !important;
   box-shadow: 
-    0 0 20px #ff6a00,
-    0 0 38px #0091ff,
-    inset 0 0 12px rgba(255, 255, 255, 0.9) !important;
+    0 0 20px #62f6bd,
+    0 0 40px #00b6de,
+    inset 0 0 12px rgba(255, 255, 255, 0.95) !important;
   animation: tile-neon-reveal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   z-index: 25;
 }
@@ -384,18 +542,18 @@
   100% { transform: scale(1.06); opacity: 1; }
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar in the 15-Color Palette */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a071a;
+  background: #0c1079;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a1f59;
+  background: #0071b4;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff6a00;
+  background: #62f6bd;
 }
