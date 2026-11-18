@@ -60,31 +60,31 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
       <div className="balatro-modal rounded-3xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="bg-[#003c5a] border-b-2 border-[#0071b4] p-5 flex items-center justify-between">
+        <div className="bg-[#0d0d0d] border-b-2 border-[#891c1c] p-5 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-black text-white tracking-wide uppercase drop-shadow-[0_2px_0_#0c1079]">
+            <h2 className="text-xl font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_2px_0_#0d0d0d]">
               Host Console
             </h2>
-            <div className="text-[11px] font-mono text-[#9cf6ff]/80 font-bold">Shortcut: Ctrl + Shift + H</div>
+            <div className="text-[11px] font-mono text-[#fffbd4]/70 font-bold">Shortcut: Ctrl + Shift + H</div>
           </div>
           <button 
             onClick={() => { soundFx.playClick(); onClose(); }}
-            className="text-[#9cf6ff] hover:text-[#62f6bd] hover:bg-white/10 rounded-xl w-8 h-8 flex items-center justify-center transition font-black text-sm cursor-pointer"
+            className="text-[#fffbd4]/70 hover:text-[#fffbd4] hover:bg-[#891c1c]/30 rounded-xl w-8 h-8 flex items-center justify-center transition font-black text-sm cursor-pointer"
           >
             ✕
           </button>
         </div>
 
         {/* Action Selector */}
-        <div className="flex border-b-2 border-[#0071b4] bg-[#0c1079]">
+        <div className="flex border-b-2 border-[#891c1c] bg-[#0d0d0d]">
           {(['reveal', 'score', 'controls'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => { soundFx.playClick(); setSelectedAction(tab); setStatusMsg(''); }}
               className={`flex-1 py-3 text-xs font-black tracking-wider transition-all border-b-4 cursor-pointer ${
                 selectedAction === tab
-                  ? 'border-[#62f6bd] text-[#62f6bd] bg-[#3120cd] shadow-[inset_0_2px_0_rgba(98,246,189,0.3)]'
-                  : 'border-transparent text-[#6ad6cd] hover:text-white'
+                  ? 'border-[#ef5368] text-[#fffbd4] bg-[#891c1c]/40 shadow-[inset_0_2px_0_rgba(239,83,104,0.3)]'
+                  : 'border-transparent text-[#fffbd4]/70 hover:text-[#fffbd4]'
               }`}
             >
               {tab === 'reveal' ? 'REVEAL TILE' : tab === 'score' ? 'ADJUST SCORE' : 'ROUND TOOLS'}
@@ -93,9 +93,9 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-4 text-[#9cf6ff] text-sm">
+        <div className="p-6 overflow-y-auto space-y-4 text-[#fffbd4] text-sm">
           {statusMsg && (
-            <div className="p-2.5 rounded-xl bg-[#003c5a] border-2 border-[#0071b4] text-[#62f6bd] font-black text-xs text-center animate-in fade-in shadow-[0_2px_0_#0c1079]">
+            <div className="p-2.5 rounded-xl bg-[#0d0d0d] border-2 border-[#891c1c] text-[#ef5368] font-black text-xs text-center animate-in fade-in shadow-[0_2px_0_#0a0f23]">
               {statusMsg}
             </div>
           )}
@@ -104,7 +104,7 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
           {selectedAction === 'reveal' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-[#9cf6ff] uppercase mb-1">
+                <label className="block text-xs font-black text-[#fffbd4] uppercase mb-1">
                   Tile Rank to Reveal (1 to 100):
                 </label>
                 <input
@@ -114,18 +114,18 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
                   value={tileNumber}
                   onChange={(e) => setTileNumber(e.target.value)}
                   placeholder="e.g. 1"
-                  className="w-full bg-[#003c5a] border-2 border-[#0071b4] border-b-4 border-b-[#0c1079] focus:border-[#62f6bd] text-[#62f6bd] px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(12,16,121,0.5)]"
+                  className="w-full bg-[#0d0d0d] border-2 border-[#891c1c] border-b-4 border-b-[#0a0f23] focus:border-[#fffbd4] text-[#fffbd4] px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-[#9cf6ff] uppercase mb-1">
+                <label className="block text-xs font-black text-[#fffbd4] uppercase mb-1">
                   Award Points to Team:
                 </label>
                 <select
                   value={targetTeam}
                   onChange={(e) => setTargetTeam(parseInt(e.target.value, 10))}
-                  className="w-full bg-[#003c5a] border-2 border-[#0071b4] border-b-4 border-b-[#0c1079] focus:border-[#62f6bd] text-[#62f6bd] px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(12,16,121,0.5)]"
+                  className="w-full bg-[#0d0d0d] border-2 border-[#891c1c] border-b-4 border-b-[#0a0f23] focus:border-[#fffbd4] text-[#fffbd4] px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
                 >
                   {teams.map((t, idx) => (
                     <option key={idx} value={idx}>{t}</option>
@@ -136,7 +136,7 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
               <button
                 type="button"
                 onClick={handleReveal}
-                className="w-full balatro-btn-blue text-white font-black py-3 rounded-xl transition tracking-wide uppercase text-xs cursor-pointer mt-2"
+                className="w-full balatro-btn-blue text-white font-black py-3 rounded-xl transition tracking-wide uppercase text-xs cursor-pointer mt-2 shadow-md"
               >
                 Reveal Tile
               </button>
@@ -147,13 +147,13 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
           {selectedAction === 'score' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-[#9cf6ff] uppercase mb-1">
+                <label className="block text-xs font-black text-[#fffbd4] uppercase mb-1">
                   Target Team:
                 </label>
                 <select
                   value={targetTeam}
                   onChange={(e) => setTargetTeam(parseInt(e.target.value, 10))}
-                  className="w-full bg-[#003c5a] border-2 border-[#0071b4] border-b-4 border-b-[#0c1079] focus:border-[#62f6bd] text-[#62f6bd] px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(12,16,121,0.5)]"
+                  className="w-full bg-[#0d0d0d] border-2 border-[#891c1c] border-b-4 border-b-[#0a0f23] focus:border-[#fffbd4] text-[#fffbd4] px-3.5 py-2.5 rounded-xl font-black outline-none text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
                 >
                   {teams.map((t, idx) => (
                     <option key={idx} value={idx}>
@@ -174,7 +174,7 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
                     key={d}
                     type="button"
                     onClick={() => handleScore(d)}
-                    className="balatro-btn-dark py-3 rounded-xl font-black text-xs text-[#9cf6ff] hover:text-[#62f6bd] transition cursor-pointer"
+                    className="balatro-btn-dark py-3 rounded-xl font-black text-xs text-[#fffbd4] hover:text-[#ef5368] transition cursor-pointer"
                   >
                     {label}
                   </button>
@@ -189,14 +189,14 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
               <button
                 type="button"
                 onClick={handleSkipTurn}
-                className="w-full balatro-btn-dark py-3 rounded-xl font-black transition text-xs cursor-pointer text-[#9cf6ff]"
+                className="w-full balatro-btn-dark py-3 rounded-xl font-black transition text-xs cursor-pointer text-[#fffbd4]"
               >
                 Skip Turn
               </button>
               <button
                 type="button"
                 onClick={handleFinishRound}
-                className="w-full balatro-btn-red text-white py-3 rounded-xl font-black transition text-xs cursor-pointer"
+                className="w-full balatro-btn-red text-white py-3 rounded-xl font-black transition text-xs cursor-pointer shadow-md"
               >
                 Force End Round Now
               </button>
@@ -205,10 +205,10 @@ export default function HostOverrideModal({ gameState, onOverride, onClose }: Ho
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#003c5a] border-t-2 border-[#0071b4] flex justify-end">
+        <div className="p-4 bg-[#0d0d0d] border-t-2 border-slate-700 flex justify-end">
           <button
             onClick={() => { soundFx.playClick(); onClose(); }}
-            className="balatro-btn-primary px-6 py-2.5 rounded-xl text-[#003c5a] font-black transition text-sm cursor-pointer"
+            className="balatro-btn-blue px-6 py-2.5 rounded-xl text-white font-black transition text-sm cursor-pointer shadow-md"
           >
             Close
           </button>

@@ -4,9 +4,12 @@ import { GameState } from '../types';
 
 interface PostGameCelebrationModalProps {
   gameState: GameState;
+  isHost?: boolean;
   onInspectBoard: () => void;
   onNextRound: () => void;
+  onPlayAgain: () => void;
   onReturnMenu: () => void;
+  onReturnToLobby?: () => void;
 }
 
 interface CorrectGuess {
@@ -25,13 +28,19 @@ interface TeamStanding {
 
 export default function PostGameCelebrationModal({
   gameState,
+  isHost = true,
   onInspectBoard,
   onNextRound,
-  onReturnMenu
+  onPlayAgain,
+  onReturnMenu,
+  onReturnToLobby
 }: PostGameCelebrationModalProps): React.JSX.Element {
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
-  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
+  const dragStartXRef = useRef<number>(0);
+  const scrollStartXRef = useRef<number>(0);
 
   const teams = gameState.teams || [];
   const roundScores = gameState.scores || [];
@@ -120,16 +129,33 @@ export default function PostGameCelebrationModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [totalTeams]);
 
+  // Global release listener so drag finishes even if pointer exits container
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        setIsDragging(false);
+      }
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('touchend', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('touchend', handleGlobalMouseUp);
+    };
+  }, []);
+
   // Auto-scrolling wheel animation for correct guesses (only when > 2 answers)
   useEffect(() => {
     const container = scrollRef.current;
-    if (!container || isPaused || currentStanding.guesses.length <= 2) return;
+    const isReduceMotion = typeof localStorage !== 'undefined' && localStorage.getItem('top100_reduce_motion') === 'true';
+    if (!container || isDragging || isReduceMotion || currentStanding.guesses.length <= 2) return;
 
     let animId: number;
-    const speed = 2.5; // pixels per frame (2.6x faster auto-scroll)
+    const speed = 1.2; // pixels per frame (smooth leisurely pace)
 
     const step = () => {
-      if (!container) return;
+      if (!container || isDraggingRef.current) return;
       container.scrollLeft += speed;
 
       // When reaching near end, loop back smoothly
@@ -141,55 +167,98 @@ export default function PostGameCelebrationModal({
 
     animId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(animId);
-  }, [isPaused, selectedIdx, currentStanding.guesses.length]);
+  }, [isDragging, selectedIdx, currentStanding.guesses.length]);
 
-  // Theme styling based on standing place (1st Mint, 2nd Cyan, 3rd Royal Violet, 4th+ Cobalt)
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || !scrollRef.current || !isScrollable) return;
+    setIsDragging(true);
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.pageX;
+    scrollStartXRef.current = scrollRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || !scrollRef.current) return;
+    e.preventDefault();
+    const deltaX = e.pageX - dragStartXRef.current;
+    scrollRef.current.scrollLeft = scrollStartXRef.current - deltaX;
+  };
+
+  const handleMouseUp = () => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!scrollRef.current || !isScrollable || e.touches.length === 0) return;
+    setIsDragging(true);
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.touches[0].pageX;
+    scrollStartXRef.current = scrollRef.current.scrollLeft;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || !scrollRef.current || e.touches.length === 0) return;
+    const deltaX = e.touches[0].pageX - dragStartXRef.current;
+    scrollRef.current.scrollLeft = scrollStartXRef.current - deltaX;
+  };
+
+  const handleTouchEnd = () => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+    }
+  };
+
+  // Theme styling based on standing place (1st Lemon Chiffon, 2nd Coral Rose, 3rd Crimson, 4th+ Navy)
   const getTheme = (place: number) => {
     if (place === 1) {
       return {
-        badgeText: isBossRush ? 'SOLO CHALLENGER' : '1ST PLACE - WINNER',
-        badgeClass: 'bg-[#62f6bd] text-[#003c5a] font-black shadow-[0_2px_8px_rgba(98,246,189,0.5)]',
-        borderClass: 'border-[#62f6bd] shadow-[0_0_40px_rgba(98,246,189,0.5)]',
-        nameColor: 'text-[#62f6bd] drop-shadow-[0_4px_0_#0c1079]',
-        scoreColor: 'text-[#9cf6ff] drop-shadow-[0_4px_0_#0c1079]',
-        cardBg: 'bg-[#003c5a] border-[#62f6bd] shadow-[0_4px_0_#0c1079]',
-        tileRankBg: 'bg-[#62f6bd] text-[#003c5a]',
-        tileAccent: 'border-[#62f6bd]/80 text-[#62f6bd]'
+        badgeText: isBossRush ? (gameState.winner === 'Co-op Squad' ? 'CO-OP SQUAD VICTORY' : 'SOLO CHALLENGER') : '1ST PLACE - WINNER',
+        badgeClass: 'bg-[#fffbd4] text-[#0d0d0d] font-black shadow-[0_2px_8px_rgba(255,251,212,0.5)]',
+        borderClass: 'border-[#fffbd4] shadow-[0_0_40px_rgba(255,251,212,0.3)]',
+        nameColor: 'text-[#fffbd4] drop-shadow-[0_4px_0_#0d0d0d]',
+        scoreColor: 'text-[#ef5368] drop-shadow-[0_4px_0_#0d0d0d]',
+        cardBg: 'bg-[#0d0d0d] border-[#fffbd4] shadow-[0_4px_0_#891c1c]',
+        tileRankBg: 'bg-[#fffbd4] text-[#0d0d0d]',
+        tileAccent: 'border-[#fffbd4] text-[#fffbd4]'
       };
     }
     if (place === 2) {
       return {
         badgeText: '2ND PLACE - RUNNER UP',
-        badgeClass: 'bg-[#00b6de] text-white font-black shadow-[0_2px_8px_rgba(0,182,222,0.5)]',
-        borderClass: 'border-[#00b6de] shadow-[0_0_30px_rgba(0,182,222,0.4)]',
-        nameColor: 'text-white drop-shadow-[0_4px_0_#0c1079]',
-        scoreColor: 'text-[#00b6de] drop-shadow-[0_4px_0_#0c1079]',
-        cardBg: 'bg-[#003c5a] border-[#00b6de] shadow-[0_4px_0_#0c1079]',
-        tileRankBg: 'bg-[#00b6de] text-white',
-        tileAccent: 'border-[#00b6de]/80 text-white'
+        badgeClass: 'bg-[#ef5368] text-[#fffbd4] font-black shadow-[0_2px_8px_rgba(239,83,104,0.5)]',
+        borderClass: 'border-[#ef5368] shadow-[0_0_30px_rgba(239,83,104,0.3)]',
+        nameColor: 'text-[#fffbd4] drop-shadow-[0_4px_0_#0d0d0d]',
+        scoreColor: 'text-[#ef5368] drop-shadow-[0_4px_0_#0d0d0d]',
+        cardBg: 'bg-[#0d0d0d] border-[#ef5368] shadow-[0_4px_0_#891c1c]',
+        tileRankBg: 'bg-[#ef5368] text-[#fffbd4]',
+        tileAccent: 'border-[#ef5368] text-[#fffbd4]'
       };
     }
     if (place === 3) {
       return {
         badgeText: '3RD PLACE',
-        badgeClass: 'bg-[#4a34de] text-[#9cf6ff] border border-[#787bd1]',
-        borderClass: 'border-[#787bd1] shadow-[0_0_25px_rgba(120,123,209,0.3)]',
-        nameColor: 'text-[#9cf6ff] drop-shadow-[0_4px_0_#0c1079]',
-        scoreColor: 'text-[#62f6bd] drop-shadow-[0_4px_0_#0c1079]',
-        cardBg: 'bg-[#3120cd] border-[#787bd1]/80 shadow-[0_4px_0_#0c1079]',
-        tileRankBg: 'bg-[#4a34de] text-[#9cf6ff]',
-        tileAccent: 'border-[#787bd1]/80 text-[#9cf6ff]'
+        badgeClass: 'bg-[#891c1c] text-[#fffbd4] border border-[#ef5368]/60',
+        borderClass: 'border-[#891c1c] shadow-[0_0_25px_rgba(137,28,28,0.3)]',
+        nameColor: 'text-[#fffbd4] drop-shadow-[0_4px_0_#0d0d0d]',
+        scoreColor: 'text-[#fffbd4] drop-shadow-[0_4px_0_#0d0d0d]',
+        cardBg: 'bg-[#0d0d0d] border-[#891c1c] shadow-[0_4px_0_#0a0f23]',
+        tileRankBg: 'bg-[#891c1c] text-[#fffbd4]',
+        tileAccent: 'border-[#891c1c] text-[#fffbd4]'
       };
     }
     return {
       badgeText: `${place}TH PLACE`,
-      badgeClass: 'bg-[#3120cd] text-[#6ad6cd] border border-[#0071b4]',
-      borderClass: 'border-[#0071b4]/90 shadow-[0_0_20px_rgba(0,113,180,0.2)]',
-      nameColor: 'text-white drop-shadow-[0_4px_0_#0c1079]',
-      scoreColor: 'text-[#9cf6ff] drop-shadow-[0_4px_0_#0c1079]',
-      cardBg: 'bg-[#003c5a] border-[#0071b4]/60 shadow-[0_4px_0_#0c1079]',
-      tileRankBg: 'bg-[#0071b4] text-white',
-      tileAccent: 'border-[#0071b4]/80 text-[#6ad6cd]'
+      badgeClass: 'bg-[#0a0f23] text-[#fffbd4] border border-[#891c1c]',
+      borderClass: 'border-[#891c1c]/90 shadow-[0_0_20px_rgba(137,28,28,0.2)]',
+      nameColor: 'text-[#fffbd4] drop-shadow-[0_4px_0_#0d0d0d]',
+      scoreColor: 'text-[#fffbd4]/80 drop-shadow-[0_4px_0_#0d0d0d]',
+      cardBg: 'bg-[#0a0f23] border-[#891c1c] shadow-[0_4px_0_#0d0d0d]',
+      tileRankBg: 'bg-[#0d0d0d] text-[#fffbd4]',
+      tileAccent: 'border-[#891c1c] text-[#fffbd4]/70'
     };
   };
 
@@ -208,10 +277,10 @@ export default function PostGameCelebrationModal({
         className={`balatro-modal rounded-3xl w-full max-w-3xl overflow-hidden flex flex-col border-3 transition-all duration-300 ${theme.borderClass}`}
       >
         {/* Celebration Header */}
-        <div className="bg-[#003c5a] p-5 md:p-6 text-center border-b-2 border-[#0071b4] relative">
+        <div className="bg-[#0d0d0d] p-5 md:p-6 text-center border-b-2 border-[#891c1c] relative">
           
           {/* Top Banner Tag */}
-          <div className="inline-block px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-2 shadow-sm border border-white/20">
+          <div className="inline-block px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-2 shadow-sm border border-[#891c1c]/50 bg-[#0a0f23]">
             <span className={theme.nameColor}>
               {isBossRush
                 ? 'Boss Rush Challenge Complete'
@@ -223,12 +292,12 @@ export default function PostGameCelebrationModal({
             </span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-black text-white tracking-wide uppercase drop-shadow-[0_3px_0_#0c1079]">
+          <h1 className="text-3xl md:text-5xl font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_3px_0_#0d0d0d]">
             {isBossRush ? 'Run Results' : 'Results'}
           </h1>
 
-          <div className="text-xs font-bold text-[#9cf6ff]/80 mt-1">
-            Category: <span className="text-white font-extrabold">{gameState.current_round_title}</span>
+          <div className="text-xs font-bold text-[#fffbd4]/80 mt-1">
+            Category: <span className="text-[#fffbd4] font-extrabold">{gameState.current_round_title}</span>
           </div>
         </div>
 
@@ -238,25 +307,49 @@ export default function PostGameCelebrationModal({
           {/* Left / Right UI Navigation Arrows */}
           {totalTeams > 1 && (
             <>
-              <button
-                type="button"
-                onClick={handlePrev}
-                aria-label="Previous Team"
-                title="Previous Team (Left Arrow)"
-                className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 md:w-13 md:h-13 rounded-2xl bg-[#3120cd] hover:bg-[#4a34de] border-2 border-[#787bd1] border-b-4 shadow-[0_4px_0_#0c1079] text-white flex items-center justify-center text-xl md:text-2xl font-black cursor-pointer transition active:translate-y-0.5 active:shadow-[0_1px_0_#0c1079]"
-              >
-                ◀
-              </button>
+              <div className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  aria-label="Previous Team"
+                  title="Previous Team (Left Arrow)"
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[#0d0d0d] hover:bg-[#891c1c] border-2 border-[#891c1c] border-b-4 shadow-[0_4px_0_#0a0f23] text-[#fffbd4] flex items-center justify-center cursor-pointer transition active:scale-95 active:shadow-[0_2px_0_#0a0f23] select-none touch-manipulation"
+                >
+                  <svg
+                    className="w-5 h-5 md:w-6 md:h-6 pointer-events-none"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={3}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              </div>
 
-              <button
-                type="button"
-                onClick={handleNext}
-                aria-label="Next Team"
-                title="Next Team (Right Arrow)"
-                className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 md:w-13 md:h-13 rounded-2xl bg-[#3120cd] hover:bg-[#4a34de] border-2 border-[#787bd1] border-b-4 shadow-[0_4px_0_#0c1079] text-white flex items-center justify-center text-xl md:text-2xl font-black cursor-pointer transition active:translate-y-0.5 active:shadow-[0_1px_0_#0c1079]"
-              >
-                ▶
-              </button>
+              <div className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  aria-label="Next Team"
+                  title="Next Team (Right Arrow)"
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[#0d0d0d] hover:bg-[#891c1c] border-2 border-[#891c1c] border-b-4 shadow-[0_4px_0_#0a0f23] text-[#fffbd4] flex items-center justify-center cursor-pointer transition active:scale-95 active:shadow-[0_2px_0_#0a0f23] select-none touch-manipulation"
+                >
+                  <svg
+                    className="w-5 h-5 md:w-6 md:h-6 pointer-events-none"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={3}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </>
           )}
 
@@ -284,11 +377,11 @@ export default function PostGameCelebrationModal({
               <span className={`text-4xl md:text-6xl font-black ${theme.scoreColor}`}>
                 {currentStanding.score}
               </span>
-              <span className="text-sm md:text-base font-black uppercase tracking-wider text-[#9cf6ff]">
+              <span className="text-sm md:text-base font-black uppercase tracking-wider text-[#fffbd4]">
                 {isMulti ? 'Total Pts' : 'Points'}
               </span>
               {isMulti && (
-                <span className="text-xs font-mono font-bold text-[#6ad6cd] ml-2">
+                <span className="text-xs font-mono font-bold text-[#ef5368] ml-2">
                   (+{currentStanding.roundScore} this round)
                 </span>
               )}
@@ -322,29 +415,35 @@ export default function PostGameCelebrationModal({
 
             {/* Scrolling Wheel Header */}
             <div className="flex items-center justify-between mb-2 px-1">
-              <div className="text-xs font-black uppercase tracking-wider text-[#62f6bd] flex items-center gap-1.5">
+              <div className="text-xs font-black uppercase tracking-wider text-[#ef5368] flex items-center gap-1.5">
                 <span>{isScrollable ? 'Correct Guesses Wheel' : 'Correct Guesses'}</span>
-                <span className="text-[10px] text-[#00b6de] font-normal">
+                <span className="text-[10px] text-[#fffbd4]/60 font-normal">
                   ({currentStanding.guesses.length} {currentStanding.guesses.length === 1 ? 'answer' : 'answers'})
                 </span>
               </div>
               {currentStanding.guesses.length > 0 && isScrollable && (
-                <span className="text-[10px] font-mono font-bold text-[#00b6de]">
-                  {isPaused ? 'Paused (Hovered)' : 'Auto-Scrolling'}
+                <span className="text-[10px] font-mono font-bold text-[#ef5368]">
+                  {isDragging ? 'Paused (Dragging)' : 'Auto-Scrolling'}
                 </span>
               )}
             </div>
 
             {/* THE SCROLLING WHEEL CONTAINER */}
             <div
-              className="relative w-full rounded-2xl bg-[#0c1079] border-2 border-[#0071b4] p-3 overflow-hidden shadow-[inset_0_3px_8px_rgba(12,16,121,0.7)]"
-              onMouseEnter={() => setIsPaused(true)}
-              onMouseLeave={() => setIsPaused(false)}
-              onTouchStart={() => setIsPaused(true)}
-              onTouchEnd={() => setIsPaused(false)}
+              className={`relative w-full rounded-2xl bg-[#0d0d0d] border-2 border-[#891c1c] p-3 overflow-hidden shadow-[inset_0_3px_8px_rgba(0,0,0,0.7)] select-none ${
+                isScrollable ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''
+              }`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
             >
               {currentStanding.guesses.length === 0 ? (
-                <div className="py-7 text-center text-xs font-bold text-[#9cf6ff]/70 uppercase tracking-wide">
+                <div className="py-7 text-center text-xs font-bold text-[#fffbd4]/60 uppercase tracking-wide">
                   No correct answers found for this team this round.
                 </div>
               ) : (
@@ -352,7 +451,7 @@ export default function PostGameCelebrationModal({
                   ref={scrollRef}
                   className={`flex items-center gap-3 py-1 ${
                     isScrollable 
-                      ? 'overflow-x-auto no-scrollbar scroll-smooth' 
+                      ? 'overflow-x-auto no-scrollbar' 
                       : 'justify-center overflow-x-hidden'
                   }`}
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -368,11 +467,11 @@ export default function PostGameCelebrationModal({
                         >
                           #{item.rank}
                         </span>
-                        <span className="font-mono text-[11px] font-black text-[#62f6bd]">
+                        <span className="font-mono text-[11px] font-black text-[#ef5368]">
                           +{item.points} pts
                         </span>
                       </div>
-                      <div className="font-black text-xs md:text-sm text-white line-clamp-2 leading-tight text-left">
+                      <div className="font-black text-xs md:text-sm text-[#fffbd4] line-clamp-2 leading-tight text-left">
                         {item.name}
                       </div>
                     </div>
@@ -382,8 +481,8 @@ export default function PostGameCelebrationModal({
             </div>
 
             {isScrollable && (
-              <div className="text-[10px] text-[#6ad6cd]/60 font-semibold mt-1 text-center">
-                Tip: Hover over the scrolling wheel to pause and read answers
+              <div className="text-[10px] text-[#fffbd4]/60 font-semibold mt-1 text-center">
+                Tip: Click and drag or swipe horizontally to browse answers
               </div>
             )}
 
@@ -392,38 +491,53 @@ export default function PostGameCelebrationModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 md:p-5 bg-[#003c5a] border-t-2 border-[#0071b4] flex flex-wrap items-center justify-between gap-3">
+        <div className="p-3 md:p-4 bg-[#0d0d0d] border-t-2 border-[#891c1c] flex flex-nowrap items-center justify-center gap-2 md:gap-3 overflow-x-auto w-full">
           <button
             type="button"
             onClick={() => {
               soundFx.playClick();
               onInspectBoard();
             }}
-            className="balatro-btn-dark px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#9cf6ff]"
+            className="balatro-btn-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#fffbd4] whitespace-nowrap shrink-0"
           >
-            Inspect 100 Board Tiles
+            Inspect Board
           </button>
 
-          <div className="flex items-center gap-3">
+          {onReturnToLobby && (
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playClick();
+                onReturnToLobby();
+              }}
+              className="balatro-btn-blue font-black px-5 py-2 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-white whitespace-nowrap shrink-0"
+            >
+              Return to Lobby with Team
+            </button>
+          )}
+
+          {!isHost && (
             <button
               type="button"
               onClick={() => {
                 soundFx.playClick();
                 onReturnMenu();
               }}
-              className="balatro-btn-dark px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#9cf6ff]"
+              className="balatro-btn-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#fffbd4] whitespace-nowrap shrink-0"
             >
               Main Menu
             </button>
+          )}
 
-            {isMulti && currentMatchRound < totalRounds ? (
+          {isHost && (
+            isMulti && currentMatchRound < totalRounds ? (
               <button
                 type="button"
                 onClick={() => {
                   soundFx.playCorrect();
                   onNextRound();
                 }}
-                className="balatro-btn-purple font-black px-6 py-2.5 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-white"
+                className="balatro-btn-blue font-black px-5 py-2 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-white whitespace-nowrap shrink-0"
               >
                 Next Round ({currentMatchRound + 1})
               </button>
@@ -431,15 +545,15 @@ export default function PostGameCelebrationModal({
               <button
                 type="button"
                 onClick={() => {
-                  soundFx.playVictorySound();
-                  onNextRound();
+                  soundFx.playClick();
+                  onPlayAgain();
                 }}
-                className="balatro-btn-primary font-black px-6 py-2.5 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-[#003c5a]"
+                className="balatro-btn-purple font-black px-5 py-2 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-white whitespace-nowrap shrink-0"
               >
                 Play Again
               </button>
-            )}
-          </div>
+            )
+          )}
         </div>
 
       </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { soundFx } from '../soundFx';
 import { GameSettings } from '../types';
 
@@ -8,6 +8,9 @@ interface SettingsModalProps {
   onClose: () => void;
   onQuitGame?: () => void;
   onReturnToMainMenu?: () => void;
+  isOnline?: boolean;
+  isHost?: boolean;
+  onReturnToLobby?: () => void;
 }
 
 export default function SettingsModal({
@@ -15,36 +18,101 @@ export default function SettingsModal({
   onSave,
   onClose,
   onQuitGame,
-  onReturnToMainMenu
+  isOnline,
+  isHost,
+  onReturnToLobby,
 }: SettingsModalProps): React.JSX.Element {
   const [showQuitConfirm, setShowQuitConfirm] = useState<boolean>(false);
-  const [localSettings, setLocalSettings] = useState<GameSettings>(() => {
-    const s = { ...settings };
-    if (!s.end_condition || !['both', 'turns', 'points'].includes(s.end_condition)) {
-      s.end_condition = 'both';
-    }
-    if (s.turn_timer === undefined || ![0, 30, 60, 90].includes(s.turn_timer)) {
-      s.turn_timer = 30;
-    }
-    if (s.max_turns === undefined || ![0, 10, 15, 20].includes(s.max_turns)) {
-      s.max_turns = s.end_condition === 'turns' ? 15 : 0;
-    }
-    if (s.point_threshold === undefined || ![0, 250, 500, 750, 1000, 1500, 2500].includes(s.point_threshold)) {
-      s.point_threshold = 500;
-    }
-    return s;
+
+  // Snapshot initial audio & visual state so Cancel can cleanly revert
+  const initialSettingsRef = useRef({
+    sfxVolume: soundFx.getSfxVolume(),
+    muted: soundFx.isMuted(),
+    reduceMotion: typeof localStorage !== 'undefined' ? localStorage.getItem('top100_reduce_motion') === 'true' : false,
+    brightness: typeof localStorage !== 'undefined' && localStorage.getItem('top100_brightness')
+      ? parseFloat(localStorage.getItem('top100_brightness')!)
+      : 100,
+    colorTheme: typeof localStorage !== 'undefined' && localStorage.getItem('top100_color_theme') === 'blue'
+      ? ('blue' as 'red' | 'blue')
+      : ('red' as 'red' | 'blue')
   });
-  const [sfxMuted, setSfxMuted] = useState<boolean>(soundFx.isMuted());
-  const [sfxVol, setSfxVol] = useState<number>(soundFx.getVolume());
+
+  const [isMuted, setIsMuted] = useState<boolean>(initialSettingsRef.current.muted);
+  const [sfxVol, setSfxVol] = useState<number>(initialSettingsRef.current.sfxVolume);
+  const [reduceMotion, setReduceMotion] = useState<boolean>(initialSettingsRef.current.reduceMotion);
+  const [brightness, setBrightness] = useState<number>(initialSettingsRef.current.brightness);
+  const [colorTheme, setColorTheme] = useState<'red' | 'blue'>(initialSettingsRef.current.colorTheme);
+
+  const applyBrightness = (val: number): void => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.filter = `brightness(${val / 100})`;
+    }
+  };
+
+  const handleBrightnessChange = (val: number): void => {
+    setBrightness(val);
+    applyBrightness(val);
+  };
+
+  const handleResetBrightness = (): void => {
+    soundFx.playSettingsChange();
+    setBrightness(100);
+    applyBrightness(100);
+  };
+
+  const handleToggleTheme = (theme: 'red' | 'blue'): void => {
+    soundFx.playSettingsChange();
+    setColorTheme(theme);
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('theme-blue', theme === 'blue');
+    }
+  };
+
+  const handleCancel = (): void => {
+    // Revert sound settings to their pre-modal state
+    soundFx.setSfxVolume(initialSettingsRef.current.sfxVolume);
+    soundFx.setMuted(initialSettingsRef.current.muted);
+
+    // Revert reduce motion
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('reduce-motion', initialSettingsRef.current.reduceMotion);
+    }
+
+    // Revert brightness
+    applyBrightness(initialSettingsRef.current.brightness);
+
+    // Revert color theme
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('theme-blue', initialSettingsRef.current.colorTheme === 'blue');
+    }
+
+    soundFx.playClick();
+    onClose();
+  };
 
   const handleSave = (): void => {
-    soundFx.setMuted(sfxMuted);
-    soundFx.setVolume(sfxVol);
+    soundFx.setMuted(isMuted);
+    soundFx.setSfxVolume(sfxVol);
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('top100_reduce_motion', String(reduceMotion));
+      localStorage.setItem('top100_brightness', String(brightness));
+      localStorage.setItem('top100_color_theme', colorTheme);
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('reduce-motion', reduceMotion);
+      document.documentElement.classList.toggle('theme-blue', colorTheme === 'blue');
+    }
+    applyBrightness(brightness);
+
     soundFx.playCorrect();
     onSave({
-      ...localSettings,
-      sfx_enabled: !sfxMuted,
-      sfx_volume: sfxVol
+      ...settings,
+      sfx_enabled: !isMuted,
+      sfx_volume: sfxVol,
+      reduce_motion: reduceMotion,
+      brightness: brightness,
+      color_theme: colorTheme
     });
     onClose();
   };
@@ -54,232 +122,242 @@ export default function SettingsModal({
       <div className="balatro-modal rounded-3xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="bg-[#003c5a] border-b-2 border-[#0071b4] p-5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black text-white tracking-wide uppercase drop-shadow-[0_2px_0_#0c1079]">
-              Settings
-            </h2>
-            {onQuitGame && (
-              <span className="bg-[#3120cd]/50 text-[#62f6bd] border border-[#62f6bd]/50 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                ⏸ Paused
-              </span>
-            )}
-          </div>
-          <button 
-            onClick={() => { soundFx.playClick(); onClose(); }}
-            className="text-[#9cf6ff] hover:text-[#62f6bd] hover:bg-white/10 rounded-xl w-8 h-8 flex items-center justify-center transition font-black text-sm cursor-pointer"
-          >
-            ✕
-          </button>
+        <div className="bg-[#0d0d0d] border-b-2 border-[#891c1c] p-5 flex items-center justify-between">
+          <h2 className="text-xl md:text-2xl font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_2px_0_#0d0d0d]">
+            Settings
+          </h2>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-5 text-[#9cf6ff]">
+        <div className="p-6 overflow-y-auto space-y-6 text-[#fffbd4]">
 
-          {/* End Condition Mode */}
-          <div>
-            <label className="block text-xs font-black tracking-wider uppercase text-[#9cf6ff] mb-2">
-              Game End Condition
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { val: 'both', label: 'Turns + Points' },
-                { val: 'turns', label: 'Turns Only' },
-                { val: 'points', label: 'Points Only' }
-              ].map(({ val, label }) => {
-                const isSelected = (localSettings.end_condition || 'both') === val;
-                return (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => {
-                      soundFx.playSettingsChange();
-                      const updated: GameSettings = {
-                        ...localSettings,
-                        end_condition: val as 'both' | 'turns' | 'points'
-                      };
-                      if (val === 'turns' && (updated.max_turns === 0 || !updated.max_turns)) {
-                        updated.max_turns = 15;
-                      }
-                      if (val === 'points' && (!updated.point_threshold || updated.point_threshold === 0)) {
-                        updated.point_threshold = 500;
-                      }
-                      setLocalSettings(updated);
-                    }}
-                    className={`py-2 px-1 rounded-xl font-black text-xs md:text-sm border-2 border-b-4 transition cursor-pointer text-center ${
-                      isSelected
-                        ? 'bg-[#62f6bd] border-[#087d6a] border-b-[#0c1079] text-[#003c5a] shadow-[0_3px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.6)]'
-                        : 'balatro-btn-dark text-[#6ad6cd]'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-[11px] text-[#6ad6cd]/80 font-semibold mt-1.5">
-              {(localSettings.end_condition || 'both') === 'both' && 'Whichever happens first: hitting point target or finishing turn limit.'}
-              {localSettings.end_condition === 'turns' && 'Round ends when turn limit is reached. Highest points win!'}
-              {localSettings.end_condition === 'points' && 'Race to the target score! No turn limits apply.'}
-            </p>
-          </div>
-
-          {/* Turn Timer */}
-          <div>
-            <label className="block text-xs font-black tracking-wider uppercase text-[#9cf6ff] mb-2">
-              Turn Timer
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { val: 0, label: 'Off (Untimed)' },
-                { val: 30, label: '30 secs' },
-                { val: 60, label: '60 secs' },
-                { val: 90, label: '90 secs' }
-              ].map(({ val, label }) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => { soundFx.playSettingsChange(); setLocalSettings({ ...localSettings, turn_timer: val }); }}
-                  className={`py-2 px-1 rounded-xl font-black text-xs md:text-sm border-2 border-b-4 transition cursor-pointer text-center ${
-                    localSettings.turn_timer === val
-                      ? 'bg-[#62f6bd] border-[#087d6a] border-b-[#0c1079] text-[#003c5a] shadow-[0_3px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.6)]'
-                      : 'balatro-btn-dark text-[#6ad6cd]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Winning Point Threshold */}
-          <div className={localSettings.end_condition === 'turns' ? 'opacity-40 pointer-events-none' : ''}>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-black tracking-wider uppercase text-[#9cf6ff]">
-                Winning Point Threshold
-              </label>
-              {localSettings.end_condition === 'turns' && (
-                <span className="text-[10px] font-black text-[#00b6de] uppercase tracking-wide">
-                  (Disabled in Turns Only)
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {[
-                { val: 250, label: '250' },
-                { val: 500, label: '500' },
-                { val: 750, label: '750' },
-                { val: 1000, label: '1000' },
-                { val: 1500, label: '1500' },
-                { val: 2500, label: '2500' }
-              ].map(({ val, label }) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => { soundFx.playSettingsChange(); setLocalSettings({ ...localSettings, point_threshold: val }); }}
-                  className={`py-2 px-1 rounded-xl font-black text-xs md:text-sm border-2 border-b-4 transition text-center cursor-pointer ${
-                    (localSettings.point_threshold ?? 500) === val
-                      ? 'bg-[#62f6bd] border-[#087d6a] border-b-[#0c1079] text-[#003c5a] shadow-[0_3px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.6)]'
-                      : 'balatro-btn-dark text-[#6ad6cd]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className="text-[11px] text-[#6ad6cd]/80 font-semibold mt-1.5">
-              Single round win target, or overall cumulative match target in tournaments.
-            </p>
-          </div>
-
-          {/* Max Turns per Team */}
-          <div className={localSettings.end_condition === 'points' ? 'opacity-40 pointer-events-none' : ''}>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-black tracking-wider uppercase text-[#9cf6ff]">
-                Max Turns Per Team
-              </label>
-              {localSettings.end_condition === 'points' && (
-                <span className="text-[10px] font-black text-[#00b6de] uppercase tracking-wide">
-                  (Unlimited in Points Only)
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { val: 0, label: 'Unlimited', disabled: localSettings.end_condition === 'turns' },
-                { val: 10, label: '10 Turns' },
-                { val: 15, label: '15 Turns' },
-                { val: 20, label: '20 Turns' }
-              ].map(({ val, label, disabled }) => (
-                <button
-                  key={val}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => { soundFx.playSettingsChange(); setLocalSettings({ ...localSettings, max_turns: val }); }}
-                  className={`py-2 rounded-xl font-black text-xs md:text-sm border-2 border-b-4 transition cursor-pointer ${
-                    disabled
-                      ? 'opacity-30 cursor-not-allowed balatro-btn-dark text-slate-500'
-                      : localSettings.max_turns === val
-                      ? 'bg-[#62f6bd] border-[#087d6a] border-b-[#0c1079] text-[#003c5a] shadow-[0_3px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.6)]'
-                      : 'balatro-btn-dark text-[#6ad6cd]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Sound Controls */}
-          <div className="pt-3 border-t-2 border-[#0071b4]">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-black tracking-wider uppercase text-[#9cf6ff]">
+          {/* Audio Controls */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs md:text-sm font-black tracking-wider uppercase text-[#fffbd4]">
                 Sound Effects
               </span>
               <button
                 type="button"
-                onClick={() => soundFx.playCorrect()}
-                className="balatro-btn-dark px-3 py-1.5 rounded-xl text-xs font-black text-[#62f6bd] cursor-pointer"
-                title="Test Sound"
+                onMouseEnter={() => soundFx.playHover()}
+                onClick={() => {
+                  const next = !isMuted;
+                  setIsMuted(next);
+                  soundFx.setMuted(next);
+                  if (!next) soundFx.playClick();
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer border transition ${
+                  isMuted
+                    ? 'bg-[#891c1c] text-[#fffbd4] border-[#ef5368] shadow-md'
+                    : 'balatro-btn-dark text-[#fffbd4] border-[#891c1c]'
+                }`}
               >
-                Test Sound
+                {isMuted ? '🔇 Audio Muted' : '🔊 Audio Active'}
               </button>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-[#9cf6ff]">Volume</span>
-              <input
-                type="range"
-                min="0.0"
-                max="1.0"
-                step="0.05"
-                value={sfxVol}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value);
-                  setSfxVol(v);
-                  soundFx.setVolume(v);
-                  soundFx.setMuted(v <= 0);
-                }}
-                onMouseUp={() => soundFx.playSettingsChange()}
-                onTouchEnd={() => soundFx.playSettingsChange()}
-                className="flex-1 accent-[#62f6bd] cursor-pointer"
-              />
-              <span className="text-xs font-mono font-bold text-[#62f6bd] w-10 text-right">{Math.round(sfxVol * 100)}%</span>
+            {/* SFX Volume */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#fffbd4]">SFX Volume</span>
+                <button
+                  type="button"
+                  disabled={isMuted}
+                  onMouseEnter={() => soundFx.playHover()}
+                  onClick={() => soundFx.playCorrect()}
+                  className="text-[11px] font-black text-[#ef5368] hover:text-[#fffbd4] uppercase tracking-wider cursor-pointer disabled:opacity-40"
+                >
+                  🔊 Test SFX
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="0.0"
+                  max="1.0"
+                  step="0.05"
+                  disabled={isMuted}
+                  value={sfxVol}
+                  onMouseEnter={() => soundFx.playHover()}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    setSfxVol(v);
+                    soundFx.setSfxVolume(v);
+                  }}
+                  onMouseUp={() => soundFx.playSettingsChange()}
+                  onTouchEnd={() => soundFx.playSettingsChange()}
+                  className="flex-1 accent-[#ef5368] cursor-pointer h-3 disabled:opacity-40"
+                />
+                <span className="text-sm font-mono font-black text-[#fffbd4] w-12 text-right">
+                  {isMuted ? '0%' : `${Math.round(sfxVol * 100)}%`}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Quit Game Button (Only shown when mid-game) */}
-          {onQuitGame && (
-            <div className="pt-3 border-t-2 border-[#0071b4]">
+          {/* Visual & Display Controls */}
+          <div className="pt-4 border-t-2 border-[#891c1c]/40 space-y-4">
+            <span className="text-xs md:text-sm font-black tracking-wider uppercase text-[#fffbd4] block">
+              Visual & Display
+            </span>
+
+            {/* Brightness Slider */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#fffbd4]">Brightness</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-mono font-black text-[#fffbd4]">
+                    {brightness}%
+                  </span>
+                  {brightness !== 100 && (
+                    <button
+                      type="button"
+                      onMouseEnter={() => soundFx.playHover()}
+                      onClick={handleResetBrightness}
+                      className="text-[11px] font-black text-[#ef5368] hover:text-[#fffbd4] uppercase tracking-wider cursor-pointer"
+                    >
+                      ↺ Reset
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="50"
+                  max="150"
+                  step="5"
+                  value={brightness}
+                  onMouseEnter={() => soundFx.playHover()}
+                  onChange={(e) => handleBrightnessChange(parseFloat(e.target.value))}
+                  onMouseUp={() => soundFx.playSettingsChange()}
+                  onTouchEnd={() => soundFx.playSettingsChange()}
+                  className="flex-1 accent-[#ef5368] cursor-pointer h-3"
+                />
+              </div>
+              <p className="text-[11px] text-[#fffbd4]/60 font-semibold">
+                Adjust overall screen lighting (50% dim to 150% bright). Default is 100%.
+              </p>
+            </div>
+
+            {/* Color Theme Palette Toggle */}
+            <div className="space-y-2 pt-2 border-t border-slate-700/60">
+              <span className="text-xs md:text-sm font-black tracking-wider uppercase text-[#fffbd4]">
+                Color Theme Mode
+              </span>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onMouseEnter={() => soundFx.playHover()}
+                  onClick={() => handleToggleTheme('red')}
+                  className={`py-3 px-3.5 rounded-2xl border-2 flex items-center justify-between text-left transition cursor-pointer ${
+                    colorTheme === 'red'
+                      ? 'bg-[#891c1c]/40 border-[#ef5368] shadow-md'
+                      : 'bg-[#0a0f23] border-slate-700 hover:border-slate-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-4 h-4 rounded-full bg-[#ef5368] border border-white shadow-sm shrink-0" />
+                    <div>
+                      <div className="text-xs md:text-sm font-black text-[#fffbd4]">Red Theme</div>
+                      <div className="text-[10px] text-[#fffbd4]/60 font-semibold">Cyber Crimson</div>
+                    </div>
+                  </div>
+                  {colorTheme === 'red' && (
+                    <span className="text-xs font-black text-[#fffbd4]">✓</span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onMouseEnter={() => soundFx.playHover()}
+                  onClick={() => handleToggleTheme('blue')}
+                  className={`py-3 px-3.5 rounded-2xl border-2 flex items-center justify-between text-left transition cursor-pointer ${
+                    colorTheme === 'blue'
+                      ? 'bg-blue-950/60 border-sky-400 shadow-md'
+                      : 'bg-[#0a0f23] border-slate-700 hover:border-slate-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-4 h-4 rounded-full bg-[#38bdf8] border border-white shadow-sm shrink-0" />
+                    <div>
+                      <div className="text-xs md:text-sm font-black text-[#fffbd4]">Blue Theme</div>
+                      <div className="text-[10px] text-[#fffbd4]/60 font-semibold">Sapphire Cobalt</div>
+                    </div>
+                  </div>
+                  {colorTheme === 'blue' && (
+                    <span className="text-xs font-black text-[#fffbd4]">✓</span>
+                  )}
+                </button>
+              </div>
+              <p className="text-[11px] text-[#fffbd4]/60 font-semibold">
+                Toggle between Cyber Crimson (classic red) and Sapphire Cobalt (all red shades turn to blue).
+              </p>
+            </div>
+
+            {/* Reduce Motion */}
+            <button
+              type="button"
+              onMouseEnter={() => soundFx.playHover()}
+              onClick={() => {
+                soundFx.playSettingsChange();
+                setReduceMotion(!reduceMotion);
+              }}
+              className={`w-full p-3.5 rounded-2xl border-2 flex items-center justify-between text-left transition cursor-pointer ${
+                reduceMotion
+                  ? 'bg-[#891c1c]/30 border-[#ef5368] shadow-md'
+                  : 'bg-[#0a0f23] border-[#891c1c]'
+              }`}
+            >
+              <div>
+                <div className="text-xs md:text-sm font-black text-[#fffbd4]">
+                  Reduce Motion & Celebrations
+                </div>
+                <div className="text-[11px] text-[#fffbd4]/70 font-semibold mt-0.5">
+                  Disable particle confetti, swirl background vortex, and steady carousel inspection.
+                </div>
+              </div>
+              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-black text-xs ${
+                reduceMotion
+                  ? 'bg-[#ef5368] border-[#fffbd4] text-[#fffbd4]'
+                  : 'bg-[#0d0d0d] border-[#891c1c] text-transparent'
+              }`}>
+                ✓
+              </div>
+            </button>
+          </div>
+
+          {/* Online Host Action: Return to Lobby with Team */}
+          {isOnline && isHost && onReturnToLobby && (
+            <div className="pt-4 border-t-2 border-slate-700">
               <button
                 type="button"
+                onMouseEnter={() => soundFx.playHover()}
+                onClick={() => {
+                  soundFx.playClick();
+                  onReturnToLobby();
+                }}
+                className="w-full py-3.5 px-4 balatro-btn-blue text-white font-black text-xs md:text-sm uppercase tracking-wider rounded-2xl transition cursor-pointer text-center shadow-md flex items-center justify-center gap-2"
+              >
+                <span>Return to Lobby with Team</span>
+              </button>
+            </div>
+          )}
+
+          {/* In-Game Only: Quit Game Button */}
+          {onQuitGame && (
+            <div className="pt-4 border-t-2 border-slate-700">
+              <button
+                type="button"
+                onMouseEnter={() => soundFx.playHover()}
                 onClick={() => {
                   soundFx.playClick();
                   setShowQuitConfirm(true);
                 }}
-                className="w-full py-3 px-4 balatro-btn-red text-rose-100 font-black text-xs uppercase tracking-wider rounded-xl transition cursor-pointer text-center"
+                className="w-full py-3.5 px-4 balatro-btn-red text-white font-black text-xs md:text-sm uppercase tracking-wider rounded-2xl transition cursor-pointer text-center shadow-md flex items-center justify-center gap-2"
               >
-                Quit Game
+                <span>✕</span>
+                <span>Quit Game</span>
               </button>
             </div>
           )}
@@ -287,61 +365,66 @@ export default function SettingsModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#003c5a] border-t-2 border-[#0071b4] flex justify-between gap-3">
+        <div className="p-4 bg-[#0d0d0d] border-t-2 border-slate-700 flex justify-between gap-3">
           <button
-            onClick={() => { soundFx.playClick(); onClose(); }}
-            className="balatro-btn-dark px-5 py-2.5 rounded-xl text-[#9cf6ff] font-black transition text-sm cursor-pointer"
+            onClick={handleCancel}
+            onMouseEnter={() => soundFx.playHover()}
+            className="balatro-btn-dark px-6 py-3 rounded-2xl text-[#fffbd4] font-black transition text-sm md:text-base uppercase tracking-wider cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="balatro-btn-primary font-black px-7 py-2.5 rounded-xl transition tracking-wide text-sm cursor-pointer text-[#003c5a]"
+            onMouseEnter={() => soundFx.playHover()}
+            className="balatro-btn-purple font-black px-8 py-3 rounded-2xl transition tracking-wider text-sm md:text-base uppercase cursor-pointer text-white shadow-md"
           >
             Save
           </button>
         </div>
 
-      </div>
-
-      {/* Quit Confirmation Popup Overlay */}
-      {showQuitConfirm && onQuitGame && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in">
-          <div className="balatro-modal p-6 md:p-8 rounded-3xl max-w-sm w-full text-center animate-in zoom-in-95 border-rose-600">
-            <div className="text-3xl mb-2">⚠️</div>
-            <h3 className="text-lg font-black text-rose-400 uppercase tracking-wider mb-2">
-              Quit Game?
-            </h3>
-            <p className="text-sm text-[#9cf6ff]/80 font-semibold mb-6 leading-relaxed">
-              Your round data will be lost. Are you sure you want to quit?
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  soundFx.playClick();
-                  setShowQuitConfirm(false);
-                }}
-                className="balatro-btn-dark px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-slate-300"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  soundFx.playClick();
-                  setShowQuitConfirm(false);
-                  onClose();
-                  onQuitGame();
-                }}
-                className="balatro-btn-red px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-white shadow-lg"
-              >
-                Yes, Quit
-              </button>
+        {/* Quit Confirmation Popup Overlay */}
+        {showQuitConfirm && onQuitGame && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in">
+            <div className="balatro-modal p-6 md:p-8 rounded-3xl max-w-sm w-full text-center border-[#ef5368] shadow-2xl">
+              <div className="text-4xl mb-2">⚠️</div>
+              <h3 className="text-lg md:text-xl font-black text-[#ef5368] uppercase tracking-wider mb-2">
+                Quit Game?
+              </h3>
+              <p className="text-sm text-[#fffbd4]/80 font-semibold mb-6 leading-relaxed">
+                Your current round progress will be lost. Are you sure you want to quit?
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onMouseEnter={() => soundFx.playHover()}
+                  onClick={() => {
+                    soundFx.playClick();
+                    setShowQuitConfirm(false);
+                  }}
+                  className="balatro-btn-dark px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#fffbd4]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onMouseEnter={() => soundFx.playHover()}
+                  onClick={() => {
+                    soundFx.playClick();
+                    setShowQuitConfirm(false);
+                    onClose();
+                    onQuitGame();
+                  }}
+                  className="balatro-btn-red px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-white shadow-lg flex items-center gap-1.5"
+                >
+                  <span>✕</span>
+                  <span>Yes, Quit</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
     </div>
   );
 }

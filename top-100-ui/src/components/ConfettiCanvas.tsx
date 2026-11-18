@@ -33,8 +33,10 @@ const CELEBRATION_COLORS = [
 export default function ConfettiCanvas({ active, durationMs = 5000 }: ConfettiCanvasProps): React.JSX.Element | null {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const isReduceMotion = typeof localStorage !== 'undefined' && localStorage.getItem('top100_reduce_motion') === 'true';
+
   useEffect(() => {
-    if (!active) return;
+    if (!active || isReduceMotion) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -155,9 +157,9 @@ export default function ConfettiCanvas({ active, durationMs = 5000 }: ConfettiCa
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [active, durationMs]);
+  }, [active, durationMs, isReduceMotion]);
 
-  if (!active) return null;
+  if (!active || isReduceMotion) return null;
 
   return (
     <canvas

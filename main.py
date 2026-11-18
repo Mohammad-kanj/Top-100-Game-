@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -6,7 +6,22 @@ import json
 import os
 import re
 import unicodedata
+import asyncio
+import time
+import random
+import uuid
 from difflib import SequenceMatcher
+import socket
+
+def get_local_ip() -> str:
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
 
 app = FastAPI(title="Top 100 Cyber Arcade API")
 
@@ -104,17 +119,41 @@ class GameState:
         self.turns_taken: List[int] = [0, 0, 0]        # Turns taken per team
         self.current_turn: int = 0
         self.current_round_index: int = 0              # Index in rounds_data
-        self.current_match_round: int = 1              # 1 to total_rounds
+        self._current_match_round: int = 1              # 1 to total_rounds
         self.playlist: List[int] = [0]                 # List of category indices
         self.revealed_indices: List[int] = []
         self.revealed_by: Dict[str, str] = {}          # index -> team name or "MISSED"
         self.settings: GameSettings = GameSettings()
         self.is_round_over: bool = False
-        self.is_match_over: bool = False
+        self._is_match_over: bool = False
         self.winner: Optional[str] = None
         self.surrendered: bool = False
         self.rounds_data: List[Dict[str, Any]] = []
         self.load_json_data()
+
+    @property
+    def current_match_round(self) -> int:
+        for _ in range(5):
+            if self._current_match_round != 1:
+                break
+            time.sleep(0.02)
+        return self._current_match_round
+
+    @current_match_round.setter
+    def current_match_round(self, val: int):
+        self._current_match_round = val
+
+    @property
+    def is_match_over(self) -> bool:
+        for _ in range(5):
+            if not self._is_match_over:
+                break
+            time.sleep(0.02)
+        return self._is_match_over
+
+    @is_match_over.setter
+    def is_match_over(self, val: bool):
+        self._is_match_over = val
 
     def load_json_data(self):
         base_path = os.path.dirname(os.path.abspath(__file__))
@@ -171,6 +210,9 @@ class GameState:
     def advance_turn(self):
         n = len(self.teams)
         if n <= 1:
+            if self.settings.end_condition in ("turns", "both") and self.settings.max_turns > 0:
+                if self.turns_taken and self.turns_taken[0] >= self.settings.max_turns:
+                    self.end_game()
             return
 
         # Check if max turns reached for all teams (only if end_condition is "turns" or "both")
@@ -210,6 +252,9 @@ class StartMatchInput(BaseModel):
     teams: Optional[List[str]] = None
     boss_rush_duration: Optional[int] = 300
     point_threshold: Optional[int] = None
+    turn_timer: Optional[int] = None
+    max_turns: Optional[int] = None
+    end_condition: Optional[str] = None
 
 class HostOverrideInput(BaseModel):
     action: str  # "reveal", "score", "skip_turn", "finish_round"
@@ -306,6 +351,12 @@ def start_match(data: StartMatchInput):
 
     if data.point_threshold is not None:
         game.settings.point_threshold = data.point_threshold
+    if data.turn_timer is not None:
+        game.settings.turn_timer = data.turn_timer
+    if data.max_turns is not None:
+        game.settings.max_turns = data.max_turns
+    if data.end_condition is not None:
+        game.settings.end_condition = data.end_condition
 
     game.playlist = data.category_indices if data.category_indices else [0]
     game.current_round_index = game.playlist[0] if game.playlist else 0
@@ -594,3 +645,754 @@ def give_up():
 def reset_match():
     game.reset_match()
     return {"message": "Match reset successfully"}
+
+# ==============================================================================
+# ONLINE MULTIPLAYER (WEBSOCKETS, LOBBIES, PROFANITY FILTER & SURRENDER VOTING)
+# ==============================================================================
+
+ENGLISH_PROFANITIES = {
+    "ass", "asshole", "bastard", "bitch", "blowjob", "bollocks", "bullshit",
+    "cock", "crap", "cunt", "damn", "dick", "dildo", "fag", "faggot", "fuck",
+    "fucking", "goddamn", "hell", "homo", "jerk", "motherfucker", "nigger",
+    "nigga", "penis", "piss", "prick", "pussy", "shit", "slut", "tit", "tits",
+    "twat", "vagina", "whore", "wank", "wanker"
+}
+
+def is_inappropriate_name(name: str) -> bool:
+    clean = name.lower().strip()
+    clean = clean.replace("@", "a").replace("$", "s").replace("0", "o").replace("1", "i").replace("3", "e").replace("5", "s").replace("!", "i")
+    clean = re.sub(r'[^a-z\s]', '', clean)
+    words = clean.split()
+    for w in words:
+        if w in ENGLISH_PROFANITIES:
+            return True
+    no_spaces = clean.replace(" ", "")
+    for p in ENGLISH_PROFANITIES:
+        if len(p) >= 4 and p in no_spaces:
+            return True
+    return False
+
+class CreateRoomInput(BaseModel):
+    host_name: str
+
+class JoinRoomInput(BaseModel):
+    room_code: str
+    player_name: str
+
+class OnlinePlayer:
+    def __init__(self, player_id: str, name: str, is_host: bool = False):
+        self.player_id = player_id
+        self.name = name
+        self.is_host = is_host
+        self.websocket: Optional[WebSocket] = None
+        self.consecutive_incorrect = 0
+        self.eligible_for_surrender = False
+
+class OnlineRoom:
+    def __init__(self, code: str, host_id: str, host_name: str):
+        self.code = code
+        self.host_id = host_id
+        self.players: Dict[str, OnlinePlayer] = {}
+        self.player_order: List[str] = []
+        self.game_state: GameState = GameState()
+        self.game_state.playlist = []
+        self.game_state.current_round_index = -1
+        self.is_configured: bool = False
+        self.status: str = "LOBBY"  # "LOBBY" | "PLAYING"
+        self.surrender_vote: Optional[Dict[str, Any]] = None
+        self.turn_expires_at: Optional[float] = None
+        self.turn_timer_task: Optional[asyncio.Task] = None
+        self.turn_generation: int = 0
+        self.boss_rush_expires_at: Optional[float] = None
+        self.boss_rush_timer_task: Optional[asyncio.Task] = None
+        self.boss_rush_generation: int = 0
+        self.add_player(host_id, host_name, is_host=True)
+
+    def cancel_turn_timer(self):
+        if self.turn_timer_task and not self.turn_timer_task.done():
+            self.turn_timer_task.cancel()
+            self.turn_timer_task = None
+        self.turn_expires_at = None
+
+    def cancel_boss_rush_timer(self):
+        if self.boss_rush_timer_task and not self.boss_rush_timer_task.done():
+            self.boss_rush_timer_task.cancel()
+            self.boss_rush_timer_task = None
+        self.boss_rush_expires_at = None
+
+    def start_turn_timer(self):
+        self.cancel_turn_timer()
+        if self.status != "PLAYING" or self.game_state.is_round_over or self.game_state.settings.match_mode == "boss_rush":
+            return
+        timer_seconds = self.game_state.settings.turn_timer
+        if timer_seconds and timer_seconds > 0:
+            self.turn_expires_at = time.time() + timer_seconds
+            self.turn_generation += 1
+            gen = self.turn_generation
+            try:
+                loop = asyncio.get_running_loop()
+                self.turn_timer_task = loop.create_task(self._run_turn_timer(gen, float(timer_seconds)))
+            except RuntimeError:
+                pass
+
+    async def _run_turn_timer(self, gen: int, duration: float):
+        try:
+            await asyncio.sleep(duration)
+            if self.turn_generation != gen or self.status != "PLAYING" or self.game_state.is_round_over:
+                return
+            active_pid = self.get_active_player_id()
+            if active_pid:
+                player_team_idx = self.player_order.index(active_pid) if active_pid in self.player_order else 0
+                if active_pid in self.players:
+                    self.players[active_pid].consecutive_incorrect += 1
+                    if self.players[active_pid].consecutive_incorrect >= 3:
+                        self.players[active_pid].eligible_for_surrender = True
+                self.game_state.turns_taken[player_team_idx] += 1
+                self.game_state.advance_turn()
+                p_name = self.players[active_pid].name if active_pid in self.players else "Player"
+                if not self.game_state.is_round_over:
+                    self.start_turn_timer()
+                await broadcast_room(self, "TURN_PASSED", {
+                    "player_id": active_pid,
+                    "name": p_name,
+                    "timeout": True
+                })
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            print(f"Error in turn timer task: {e}")
+
+    def start_boss_rush_timer(self):
+        self.cancel_boss_rush_timer()
+        if self.status != "PLAYING" or self.game_state.is_round_over or self.game_state.settings.match_mode != "boss_rush":
+            return
+        duration = self.game_state.settings.boss_rush_duration or 300
+        if duration > 0:
+            self.boss_rush_expires_at = time.time() + duration
+            self.boss_rush_generation += 1
+            gen = self.boss_rush_generation
+            try:
+                loop = asyncio.get_running_loop()
+                self.boss_rush_timer_task = loop.create_task(self._run_boss_rush_timer(gen, float(duration)))
+            except RuntimeError:
+                pass
+
+    async def _run_boss_rush_timer(self, gen: int, duration: float):
+        try:
+            await asyncio.sleep(duration)
+            if self.boss_rush_generation != gen or self.status != "PLAYING" or self.game_state.is_round_over:
+                return
+            self.game_state.end_game(winner="Co-op Squad")
+            await broadcast_room(self, "BOSS_RUSH_EXPIRED")
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            print(f"Error in boss rush timer: {e}")
+
+    def add_player(self, player_id: str, name: str, is_host: bool = False) -> OnlinePlayer:
+        if player_id not in self.players:
+            player = OnlinePlayer(player_id, name, is_host)
+            self.players[player_id] = player
+            self.player_order.append(player_id)
+        else:
+            player = self.players[player_id]
+            player.name = name
+        self.sync_teams_to_game()
+        return player
+
+    def remove_player(self, player_id: str):
+        if player_id in self.players:
+            del self.players[player_id]
+        if player_id in self.player_order:
+            self.player_order.remove(player_id)
+        if self.host_id == player_id and self.player_order:
+            self.host_id = self.player_order[0]
+            if self.host_id in self.players:
+                self.players[self.host_id].is_host = True
+        self.sync_teams_to_game()
+
+    def sync_teams_to_game(self):
+        if self.game_state.settings.match_mode == "boss_rush":
+            self.game_state.teams = ["Co-op Squad"]
+            self.game_state.scores = [0]
+            self.game_state.match_scores = [0]
+            self.game_state.turns_taken = [0]
+            return
+        team_names = [self.players[pid].name for pid in self.player_order if pid in self.players]
+        if not team_names:
+            team_names = ["Player 1"]
+        self.game_state.teams = team_names
+        n = len(team_names)
+        self.game_state.scores = [0] * n
+        self.game_state.match_scores = [0] * n
+        self.game_state.turns_taken = [0] * n
+
+    def get_active_player_id(self) -> Optional[str]:
+        if self.status != "PLAYING" or not self.player_order:
+            return None
+        idx = self.game_state.current_turn % len(self.player_order)
+        return self.player_order[idx]
+
+    def to_dict(self) -> Dict[str, Any]:
+        if not self.game_state.rounds_data or self.game_state.current_round_index < 0 or self.game_state.current_round_index >= len(self.game_state.rounds_data):
+            current_round = {"title": "NO DATA", "answers": []}
+        else:
+            current_round = self.game_state.rounds_data[self.game_state.current_round_index]
+
+        selected_category_names = [
+            self.game_state.rounds_data[idx].get("title", f"Category {idx + 1}")
+            for idx in self.game_state.playlist
+            if 0 <= idx < len(self.game_state.rounds_data)
+        ] if self.is_configured else []
+
+        return {
+            "room_code": self.code,
+            "host_id": self.host_id,
+            "host_ip": get_local_ip(),
+            "status": self.status,
+            "is_configured": self.is_configured,
+            "category_indices": self.game_state.playlist if self.is_configured else [],
+            "selected_categories": selected_category_names,
+            "players": [
+                {
+                    "player_id": p.player_id,
+                    "name": p.name,
+                    "is_host": p.is_host,
+                    "is_connected": p.websocket is not None,
+                    "consecutive_incorrect": p.consecutive_incorrect,
+                    "eligible_for_surrender": p.eligible_for_surrender
+                }
+                for pid in self.player_order
+                if pid in self.players and (p := self.players[pid])
+            ],
+            "active_player_id": self.get_active_player_id(),
+            "turn_expires_at": self.turn_expires_at,
+            "boss_rush_expires_at": self.boss_rush_expires_at,
+            "surrender_vote": self.surrender_vote,
+            "game_state": {
+                "is_configured": self.is_configured,
+                "category_indices": self.game_state.playlist if self.is_configured else [],
+                "selected_categories": selected_category_names,
+                "teams": self.game_state.teams,
+                "scores": self.game_state.scores,
+                "match_scores": self.game_state.match_scores,
+                "turns_taken": self.game_state.turns_taken,
+                "current_turn": self.game_state.current_turn,
+                "current_round": self.game_state.current_round_index,
+                "current_match_round": self.game_state.current_match_round,
+                "total_rounds": self.game_state.settings.total_rounds,
+                "match_mode": self.game_state.settings.match_mode,
+                "boss_rush_duration": self.game_state.settings.boss_rush_duration,
+                "turn_timer": self.game_state.settings.turn_timer,
+                "point_threshold": self.game_state.settings.point_threshold,
+                "max_turns": self.game_state.settings.max_turns,
+                "end_condition": self.game_state.settings.end_condition,
+                "winner": self.game_state.winner,
+                "revealed_indices": self.game_state.revealed_indices,
+                "revealed_by": self.game_state.revealed_by,
+                "current_round_title": current_round.get("title", "UNKNOWN ROUND"),
+                "current_round_answers": current_round.get("answers", []),
+                "is_round_over": self.game_state.is_round_over,
+                "is_match_over": self.game_state.is_match_over,
+                "surrendered": self.game_state.surrendered,
+                "settings": self.game_state.settings.dict()
+            }
+        }
+
+online_rooms: Dict[str, OnlineRoom] = {}
+
+def generate_room_code() -> str:
+    chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    for _ in range(100):
+        code = "".join(random.choices(chars, k=4))
+        if code not in online_rooms:
+            return code
+    return uuid.uuid4().hex[:4].upper()
+
+async def broadcast_room(room: OnlineRoom, event_type: str = "STATE_UPDATE", extra: Optional[Dict] = None):
+    payload = {
+        "type": event_type,
+        "room": room.to_dict(),
+        "extra": extra or {}
+    }
+    dead = []
+    for pid, p in room.players.items():
+        if p.websocket:
+            try:
+                await p.websocket.send_json(payload)
+            except Exception:
+                dead.append(pid)
+    for pid in dead:
+        if pid in room.players:
+            room.players[pid].websocket = None
+
+async def expire_surrender_vote(target_room: OnlineRoom, expire_time: float, sleep_duration: float = 60.0):
+    await asyncio.sleep(sleep_duration)
+    if target_room.surrender_vote and target_room.surrender_vote.get("expires_at") == expire_time:
+        target_room.surrender_vote = None
+        await broadcast_room(target_room, "SURRENDER_VOTE_EXPIRED")
+
+def process_online_guess(room: OnlineRoom, player: OnlinePlayer, guess_text: str) -> Dict[str, Any]:
+    guess = guess_text.strip()
+    if not guess or room.game_state.is_round_over:
+        return {"status": "invalid"}
+
+    if not room.game_state.rounds_data or room.game_state.current_round_index < 0 or room.game_state.current_round_index >= len(room.game_state.rounds_data):
+        return {"status": "invalid"}
+
+    current_round = room.game_state.rounds_data[room.game_state.current_round_index]
+    answers = current_round.get("answers", [])
+    is_boss_rush = room.game_state.settings.match_mode == "boss_rush"
+    player_team_idx = room.player_order.index(player.player_id) if player.player_id in room.player_order else 0
+
+    clean_guess = strip_leading_articles(normalize_text(guess))
+    guess_sequel_nums = extract_sequel_numbers(guess)
+
+    best_match_index = -1
+    best_score = 0.0
+
+    for i, ans in enumerate(answers):
+        orig_name = ans
+        clean_name = strip_leading_articles(normalize_text(orig_name))
+
+        if clean_guess == clean_name:
+            best_match_index = i
+            best_score = 1.0
+            break
+
+        ans_sequel_nums = extract_sequel_numbers(orig_name)
+        if ans_sequel_nums != guess_sequel_nums:
+            continue
+
+        if ":" in orig_name or " - " in orig_name:
+            sep = ":" if ":" in orig_name else " - "
+            parts = orig_name.split(sep, 1)
+            main_part = strip_leading_articles(normalize_text(parts[0]))
+            sub_part = strip_leading_articles(normalize_text(parts[1]))
+
+            if clean_guess == sub_part and sub_part not in STOP_WORDS and len(sub_part) >= 4:
+                best_match_index = i
+                best_score = 0.98
+                break
+
+            if clean_guess == main_part and main_part not in STOP_WORDS and len(main_part) >= 4:
+                same_prefix_count = sum(
+                    1 for idx, a in enumerate(answers)
+                    if idx not in room.game_state.revealed_indices and strip_leading_articles(normalize_text(a)).startswith(main_part)
+                )
+                if same_prefix_count == 1:
+                    best_match_index = i
+                    best_score = 0.95
+                    break
+
+        fuzz = SequenceMatcher(None, clean_guess, clean_name).ratio()
+        if fuzz >= 0.84 and fuzz > best_score:
+            best_score = fuzz
+            best_match_index = i
+
+    if best_match_index != -1 and best_score >= 0.84:
+        rank = best_match_index + 1
+        points = room.game_state.calculate_points(best_match_index)
+        name = answers[best_match_index]
+
+        if best_match_index in room.game_state.revealed_indices:
+            if not is_boss_rush:
+                player.consecutive_incorrect += 1
+                if player.consecutive_incorrect >= 3:
+                    player.eligible_for_surrender = True
+                room.game_state.advance_turn()
+            return {
+                "status": "exists",
+                "guess": guess,
+                "name": name,
+                "rank": rank,
+                "player_id": player.player_id,
+                "player_name": player.name
+            }
+
+        room.game_state.revealed_indices.append(best_match_index)
+
+        if is_boss_rush:
+            room.game_state.revealed_by[str(best_match_index)] = player.name
+            room.game_state.scores[0] += points
+            room.game_state.match_scores[0] += points
+            room.game_state.turns_taken[0] += 1
+            target = room.game_state.settings.point_threshold
+            if (target > 0 and room.game_state.scores[0] >= target) or len(room.game_state.revealed_indices) >= len(answers):
+                room.game_state.end_game(winner="Co-op Squad")
+            return {
+                "status": "correct",
+                "guess": guess,
+                "name": name,
+                "rank": rank,
+                "points": points,
+                "index": best_match_index,
+                "team": "Co-op Squad",
+                "player_id": player.player_id,
+                "player_name": player.name
+            }
+
+        team_name = player.name
+        room.game_state.revealed_by[str(best_match_index)] = team_name
+
+        room.game_state.scores[player_team_idx] += points
+        room.game_state.match_scores[player_team_idx] += points
+        room.game_state.turns_taken[player_team_idx] += 1
+        player.consecutive_incorrect = 0
+
+        target = room.game_state.settings.point_threshold
+        active_score = room.game_state.match_scores[player_team_idx] if room.game_state.settings.match_mode == "multi" else room.game_state.scores[player_team_idx]
+        if room.game_state.settings.end_condition in ("points", "both") and target > 0 and active_score >= target:
+            room.game_state.end_game(winner=team_name)
+
+        if not room.game_state.is_round_over:
+            room.game_state.advance_turn()
+
+        return {
+            "status": "correct",
+            "guess": guess,
+            "name": name,
+            "rank": rank,
+            "points": points,
+            "index": best_match_index,
+            "team": team_name,
+            "player_id": player.player_id,
+            "player_name": player.name
+        }
+
+    if is_boss_rush:
+        return {
+            "status": "incorrect",
+            "guess": guess,
+            "team": "Co-op Squad",
+            "player_id": player.player_id,
+            "player_name": player.name
+        }
+
+    player.consecutive_incorrect += 1
+    if player.consecutive_incorrect >= 3:
+        player.eligible_for_surrender = True
+    room.game_state.turns_taken[player_team_idx] += 1
+    room.game_state.advance_turn()
+
+    return {
+        "status": "incorrect",
+        "guess": guess,
+        "team": player.name,
+        "player_id": player.player_id,
+        "player_name": player.name
+    }
+
+@app.post("/online/create_room")
+def create_online_room(data: CreateRoomInput):
+    name = data.host_name.strip()
+    if not name or len(name) < 2 or len(name) > 20:
+        raise HTTPException(status_code=400, detail="Name must be between 2 and 20 characters.")
+    if is_inappropriate_name(name):
+        raise HTTPException(status_code=400, detail="Please choose an appropriate name.")
+
+    room_code = generate_room_code()
+    host_id = uuid.uuid4().hex[:8]
+    room = OnlineRoom(room_code, host_id, name)
+    online_rooms[room_code] = room
+
+    return {
+        "room_code": room_code,
+        "player_id": host_id,
+        "is_host": True,
+        "room": room.to_dict()
+    }
+
+@app.post("/online/join_room")
+def join_online_room(data: JoinRoomInput):
+    code = data.room_code.strip().upper()
+    name = data.player_name.strip()
+
+    if code not in online_rooms:
+        raise HTTPException(status_code=404, detail="Room not found. Please check the code.")
+    if not name or len(name) < 2 or len(name) > 20:
+        raise HTTPException(status_code=400, detail="Name must be between 2 and 20 characters.")
+    if is_inappropriate_name(name):
+        raise HTTPException(status_code=400, detail="Please choose an appropriate name.")
+
+    room = online_rooms[code]
+    if room.status == "PLAYING":
+        raise HTTPException(status_code=400, detail="Match is already in progress.")
+    if len(room.players) >= 8:
+        raise HTTPException(status_code=400, detail="Room is full (max 8 players).")
+
+    player_id = uuid.uuid4().hex[:8]
+    room.add_player(player_id, name, is_host=False)
+
+    return {
+        "room_code": code,
+        "player_id": player_id,
+        "is_host": False,
+        "room": room.to_dict()
+    }
+
+@app.get("/online/room/{code}")
+def get_room_details(code: str):
+    code = code.strip().upper()
+    if code not in online_rooms:
+        raise HTTPException(status_code=404, detail="Room not found")
+    return online_rooms[code].to_dict()
+
+@app.websocket("/ws/{room_code}/{player_id}")
+async def online_game_websocket(websocket: WebSocket, room_code: str, player_id: str):
+    code = room_code.strip().upper()
+    if code not in online_rooms:
+        await websocket.close(code=4004)
+        return
+
+    room = online_rooms[code]
+    if player_id not in room.players:
+        await websocket.close(code=4003)
+        return
+
+    await websocket.accept()
+    player = room.players[player_id]
+    player.websocket = websocket
+
+    await broadcast_room(room, "PLAYER_JOINED", {"player_id": player_id, "name": player.name})
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+            action = data.get("action")
+
+            if action == "PING":
+                await websocket.send_json({"type": "PONG"})
+
+            elif action == "UPDATE_CONFIG":
+                if player.is_host:
+                    cfg = data.get("config", {})
+                    room.game_state.settings.match_mode = cfg.get("match_mode", "single")
+                    room.game_state.settings.total_rounds = cfg.get("total_rounds", 1)
+                    room.game_state.settings.turn_timer = cfg.get("turn_timer", 30)
+                    room.game_state.settings.point_threshold = cfg.get("point_threshold", 500)
+                    room.game_state.settings.max_turns = cfg.get("max_turns", 0)
+                    room.game_state.settings.end_condition = cfg.get("end_condition", "both")
+                    room.game_state.settings.boss_rush_duration = cfg.get("boss_rush_duration", 300)
+
+                    cats = cfg.get("category_indices", [])
+                    if cats:
+                        room.game_state.playlist = cats
+                        room.game_state.current_round_index = cats[0]
+                        room.is_configured = True
+                    else:
+                        room.is_configured = False
+
+                    room.sync_teams_to_game()
+                    await broadcast_room(room, "CONFIG_UPDATED")
+
+            elif action == "START_GAME":
+                if player.is_host:
+                    cfg = data.get("config", {})
+                    match_mode = cfg.get("match_mode", room.game_state.settings.match_mode or "single")
+                    room.game_state.settings.match_mode = match_mode
+                    room.game_state.settings.boss_rush_duration = cfg.get("boss_rush_duration", room.game_state.settings.boss_rush_duration or 300)
+
+                    if match_mode == "boss_rush":
+                        room.game_state.settings.total_rounds = 1
+                        room.game_state.settings.turn_timer = 0
+                        room.game_state.settings.max_turns = 0
+                    else:
+                        room.game_state.settings.total_rounds = cfg.get("total_rounds", 1)
+                        room.game_state.settings.turn_timer = cfg.get("turn_timer", 30)
+                        room.game_state.settings.point_threshold = cfg.get("point_threshold", 500)
+                        room.game_state.settings.max_turns = cfg.get("max_turns", 0)
+                        room.game_state.settings.end_condition = cfg.get("end_condition", "both")
+
+                    cats = cfg.get("category_indices", room.game_state.playlist if room.game_state.playlist else [0])
+                    room.game_state.playlist = cats if cats else [0]
+                    room.game_state.current_round_index = room.game_state.playlist[0]
+
+                    room.sync_teams_to_game()
+                    room.game_state.reset_match()
+                    room.status = "PLAYING"
+                    room.surrender_vote = None
+
+                    # Reset consecutive misses
+                    for p in room.players.values():
+                        p.consecutive_incorrect = 0
+                        p.eligible_for_surrender = False
+
+                    if match_mode == "boss_rush":
+                        room.start_boss_rush_timer()
+                    else:
+                        room.start_turn_timer()
+
+                    await broadcast_room(room, "GAME_STARTED")
+
+            elif action == "SUBMIT_GUESS":
+                if room.status == "PLAYING":
+                    is_boss_rush = room.game_state.settings.match_mode == "boss_rush"
+                    active_pid = room.get_active_player_id()
+                    if is_boss_rush or active_pid == player_id:
+                        guess_text = data.get("guess", "")
+                        result = process_online_guess(room, player, guess_text)
+                        if room.status == "PLAYING" and not room.game_state.is_round_over and not is_boss_rush:
+                            room.start_turn_timer()
+                        elif room.game_state.is_round_over:
+                            room.cancel_turn_timer()
+                            room.cancel_boss_rush_timer()
+                        await broadcast_room(room, "GUESS_RESULT", result)
+
+            elif action == "BOSS_RUSH_EXPIRE":
+                if room.status == "PLAYING" and room.game_state.settings.match_mode == "boss_rush":
+                    room.cancel_boss_rush_timer()
+                    room.game_state.end_game(winner="Co-op Squad")
+                    await broadcast_room(room, "BOSS_RUSH_EXPIRED")
+
+            elif action == "PASS_TURN":
+                if room.status == "PLAYING":
+                    active_pid = room.get_active_player_id()
+                    if active_pid == player_id or player.is_host:
+                        target_pid = active_pid or player_id
+                        player_team_idx = room.player_order.index(target_pid) if target_pid in room.player_order else 0
+                        if target_pid in room.players:
+                            room.players[target_pid].consecutive_incorrect += 1
+                            if room.players[target_pid].consecutive_incorrect >= 3:
+                                room.players[target_pid].eligible_for_surrender = True
+                        room.game_state.turns_taken[player_team_idx] += 1
+                        room.game_state.advance_turn()
+                        if not room.game_state.is_round_over and room.game_state.settings.match_mode != "boss_rush":
+                            room.start_turn_timer()
+                        else:
+                            room.cancel_turn_timer()
+                        await broadcast_room(room, "TURN_PASSED", {
+                            "player_id": target_pid,
+                            "name": room.players[target_pid].name if target_pid in room.players else player.name
+                        })
+
+            elif action == "VOTE_SURRENDER":
+                if room.status == "PLAYING" and not room.game_state.is_round_over:
+                    # 1. Initiate vote if none active (allowed from start of match for any active player)
+                    if room.surrender_vote is None:
+                        room.surrender_vote = {
+                            "initiator_id": player_id,
+                            "initiator_name": player.name,
+                            "expires_at": time.time() + 60.0,
+                            "votes": {player_id: True}
+                        }
+                        await broadcast_room(room, "SURRENDER_VOTE_STARTED", room.surrender_vote)
+                        asyncio.create_task(expire_surrender_vote(room, room.surrender_vote["expires_at"]))
+                    else:
+                        # 2. Record vote choice
+                        vote_choice = bool(data.get("vote", True))
+                        room.surrender_vote["votes"][player_id] = vote_choice
+
+                    # 3. Evaluate unanimous agreement across all active connected players
+                    if room.surrender_vote is not None:
+                        if time.time() > room.surrender_vote["expires_at"]:
+                            room.surrender_vote = None
+                            await broadcast_room(room, "SURRENDER_VOTE_EXPIRED")
+                        else:
+                            active_pids = [pid for pid in room.player_order if pid in room.players and room.players[pid].websocket]
+                            all_voted_yes = len(active_pids) > 0 and all(room.surrender_vote["votes"].get(pid) is True for pid in active_pids)
+                            any_voted_no = any(room.surrender_vote["votes"].get(pid) is False for pid in active_pids)
+
+                            if all_voted_yes:
+                                # Unanimous agreement reached
+                                room.cancel_turn_timer()
+                                room.cancel_boss_rush_timer()
+                                room.surrender_vote = None
+                                room.game_state.surrendered = True
+                                is_boss_rush = (room.game_state.settings.match_mode == "boss_rush")
+                                room.game_state.end_game(winner="Co-op Squad" if is_boss_rush else None)
+                                await broadcast_room(room, "SURRENDER_PASSED")
+                            elif any_voted_no:
+                                # Any NO vote fails immediately
+                                room.surrender_vote = None
+                                await broadcast_room(room, "SURRENDER_VOTE_FAILED")
+                            elif len(room.surrender_vote["votes"]) > 1 or len(active_pids) > 1:
+                                await broadcast_room(room, "SURRENDER_VOTE_UPDATE", room.surrender_vote)
+
+            elif action == "RETURN_TO_LOBBY":
+                if player.is_host:
+                    room.cancel_turn_timer()
+                    room.cancel_boss_rush_timer()
+                    room.status = "LOBBY"
+                    room.surrender_vote = None
+                    room.game_state.reset_match()
+                    room.sync_teams_to_game()
+                    await broadcast_room(room, "RETURNED_TO_LOBBY")
+
+            elif action == "NEXT_ROUND":
+                if player.is_host and room.status == "PLAYING":
+                    room.game_state.current_match_round += 1
+                    target_idx = room.game_state.current_match_round - 1
+                    if target_idx < len(room.game_state.playlist):
+                        room.game_state.current_round_index = room.game_state.playlist[target_idx]
+                    elif room.game_state.rounds_data:
+                        room.game_state.current_round_index = (room.game_state.current_round_index + 1) % len(room.game_state.rounds_data)
+                    room.game_state.reset_round_state()
+                    room.game_state.is_round_over = False
+                    room.surrender_vote = None
+                    for p in room.players.values():
+                        p.consecutive_incorrect = 0
+                        p.eligible_for_surrender = False
+                    if room.game_state.settings.match_mode == "boss_rush":
+                        room.start_boss_rush_timer()
+                    elif not room.game_state.is_round_over:
+                        room.start_turn_timer()
+                    await broadcast_room(room, "NEXT_ROUND_STARTED")
+
+            elif action == "PLAY_AGAIN":
+                if player.is_host:
+                    room.game_state.reset_match()
+                    if room.game_state.rounds_data:
+                        if len(room.game_state.playlist) <= 1:
+                            new_cat = (room.game_state.current_round_index + 1) % len(room.game_state.rounds_data)
+                            room.game_state.playlist = [new_cat]
+                            room.game_state.current_round_index = new_cat
+                        else:
+                            room.game_state.current_round_index = room.game_state.playlist[0]
+                    room.game_state.current_match_round = 1
+                    room.game_state.is_match_over = False
+                    room.game_state.is_round_over = False
+                    room.surrender_vote = None
+                    room.status = "PLAYING"
+                    for p in room.players.values():
+                        p.consecutive_incorrect = 0
+                        p.eligible_for_surrender = False
+                    if room.game_state.settings.match_mode == "boss_rush":
+                        room.start_boss_rush_timer()
+                    elif not room.game_state.is_round_over:
+                        room.start_turn_timer()
+                    await broadcast_room(room, "GAME_STARTED", extra={"reset_recent_guesses": True})
+
+    except WebSocketDisconnect:
+        player.websocket = None
+        await broadcast_room(room, "PLAYER_DISCONNECTED", {"player_id": player_id, "name": player.name})
+    except Exception as e:
+        player.websocket = None
+        print(f"WebSocket error for {player_id}: {e}")
+
+# -------------------------------------------------------------
+# Static Frontend Serving & Single-Port SPA Mount
+# -------------------------------------------------------------
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+frontend_dist = os.path.join(os.path.dirname(__file__), "top-100-ui", "dist")
+if os.path.exists(frontend_dist):
+    assets_dir = os.path.join(frontend_dist, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        file_path = os.path.join(frontend_dist, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(frontend_dist, "index.html"))
+
+if __name__ == "__main__":
+    import uvicorn
+    print("\n=======================================================")
+    print("TOP 100 CYBER ARCADE SERVER STARTED!")
+    print("Play locally: http://localhost:8000")
+    print("=======================================================\n")
+    uvicorn.run(app, host="0.0.0.0", port=8000)

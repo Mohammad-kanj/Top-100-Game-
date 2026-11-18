@@ -1,247 +1,526 @@
-@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Titan+One&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  body { @apply font-sans; }
-}
-
-
-
+@import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Titan+One&display=swap');
+@import "tailwindcss";
 @theme {
-  --font-sans: 'Silkscreen', cursive, sans-serif;
-  --font-mono: 'Silkscreen', monospace, sans-serif;
-  --font-silkscreen: 'Silkscreen', monospace, sans-serif;
+  /* Font families */
+  --font-sans: 'Archivo', system-ui, sans-serif;
+  --font-mono: 'Archivo', monospace;
 
-  /* 15-Color Palette */
-  --color-mint-bright: #62f6bd;
-  --color-emerald: #10aa83;
-  --color-forest-teal: #087d6a;
-  --color-ocean-slate: #003c5a;
-  --color-ice-cyan: #9cf6ff;
-  --color-sky-cyan: #00b6de;
-  --color-marine-blue: #0071b4;
-  --color-midnight-navy: #0c1079;
-  --color-soft-mint: #6ad6cd;
-  --color-electric-blue: #107dee;
-  --color-cobalt: #3120cd;
-  --color-velvet-purple: #4a089c;
-  --color-periwinkle: #787bd1;
-  --color-royal-violet: #4a34de;
-  --color-steel-slate: #4d6b75;
+  /* ==========================================================
+     CORE COLOR PALETTE
+     #891c1c (crimson), #0d0d0d (black), #fffbd4 (lemon chiffon),
+     #0a0f23 (navy), #ef5368 (coral)
+     ========================================================== */
+
+  --color-crimson:     #891c1c;   /* deep crimson red     */
+  --color-black:       #0d0d0d;   /* obsidian black       */
+  --color-lemon:       #fffbd4;   /* lemon chiffon cream  */
+  --color-navy:        #0a0f23;   /* deep dark navy       */
+  --color-coral:       #ef5368;   /* vibrant coral rose   */
+
+  /* Aliases for backwards compatibility */
+  --color-mint:        #fffbd4;
+  --color-emerald:     #ef5368;
+  --color-forest:      #891c1c;
+  --color-ocean:       #0a0f23;
+  --color-marine:      #891c1c;
+  --color-electric:    #ef5368;
+  --color-midnight:    #0d0d0d;
+  --color-ice:         #fffbd4;
+  --color-sky:         #ef5368;
+  --color-softmint:    #fffbd4;
+  --color-cobalt:      #891c1c;
+  --color-velvet:      #0d0d0d;
+  --color-periwinkle:  #891c1c;
+  --color-royal:       #891c1c;
+  --color-steel:       #ef5368;
 }
 
-/* Force Silkscreen font globally across all text, inputs, buttons, and elements */
-*, *::before, *::after, html, body, input, button, select, textarea {
-  font-family: 'Silkscreen', 'Pixelify Sans', "Apple Color Emoji", "Segoe UI Emoji", sans-serif !important;
+/* ==========================================================
+   GLOBAL BASE
+   ========================================================== */
+@layer base {
+  html, body {
+    font-family: 'Archivo', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: #0a0f23;
+    color: #fffbd4;
+  }
+  * {
+    font-family: 'Archivo', system-ui, sans-serif;
+  }
+  input, button, select, textarea {
+    font-family: 'Archivo', system-ui, sans-serif;
+  }
+  button,
+  [role="button"] {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button *,
+  [role="button"] * {
+    pointer-events: none;
+  }
 }
 
-/* Strictly reserve Titan One for the massive arcade neon title */
+/* Titan One for Title */
 .arcade-neon-top,
 .arcade-neon-100,
 .balatro-title-text {
   font-family: 'Titan One', 'Impact', cursive, sans-serif !important;
 }
 
-@layer base {
-  body {
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-    background-color: #0c1079;
-    color: #ffffff;
-  }
-  button, input, select, textarea {
-    font-family: inherit;
-  }
-}
-
 /* ========================================================= */
-/* ARCADE TACTILE SLABS & PANELS (Multi-Tone Cohesive Layering)*/
+/* ARCADE TACTILE SLABS & PANELS (Navy, Crimson, Black)      */
 /* ========================================================= */
 
 .balatro-card {
-  background: #003c5a;
-  border: 2px solid #787bd1;
-  box-shadow: 0 4px 0 #0c1079, inset 0 1.5px 0 rgba(156, 246, 255, 0.2);
+  background: #0a0f23;
+  border: 2px solid #891c1c;
+  box-shadow: 0 4px 0 #0d0d0d, inset 0 1.5px 0 rgba(255, 251, 212, 0.15);
 }
 
 .balatro-card-interactive {
-  background: #003c5a;
-  border: 2px solid #787bd1;
-  box-shadow: 0 4px 0 #0c1079, inset 0 1.5px 0 rgba(156, 246, 255, 0.2);
+  background: #0a0f23;
+  border: 2px solid #891c1c;
+  box-shadow: 0 4px 0 #0d0d0d, inset 0 1.5px 0 rgba(255, 251, 212, 0.15);
   transition: all 0.08s ease;
 }
 .balatro-card-interactive:hover {
   transform: translateY(-2px);
-  border-color: #62f6bd;
-  box-shadow: 0 6px 0 #0c1079, inset 0 1.5px 0 rgba(98, 246, 189, 0.45);
+  border-color: #fffbd4;
+  box-shadow: 0 6px 0 #0d0d0d, inset 0 1.5px 0 rgba(255, 251, 212, 0.45);
 }
 .balatro-card-interactive:active {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 #0c1079;
+  box-shadow: 0 2px 0 #0d0d0d;
 }
 
 /* Balatro Panel and Modal Depth */
 .balatro-panel {
-  background: #003c5a;
-  border: 2.5px solid #0071b4;
-  box-shadow: 0 8px 0 #0c1079, inset 0 2px 0 rgba(156, 246, 255, 0.25);
+  background: #0a0f23;
+  border: 2.5px solid #891c1c;
+  box-shadow: 0 8px 0 #0d0d0d, inset 0 2px 0 rgba(255, 251, 212, 0.18);
 }
 
 .balatro-modal {
-  background: #0c1079;
-  border: 3px solid #787bd1;
-  box-shadow: 0 12px 0 #4a089c, inset 0 2px 0 rgba(156, 246, 255, 0.3);
+  background: #0a0f23;
+  border: 3.5px solid #891c1c;
+  box-shadow: 0 12px 0 #0d0d0d, inset 0 2px 0 rgba(255, 251, 212, 0.22);
 }
 
 /* ========================================================= */
-/* CHUNKY PHYSICAL ARCADE BUTTONS                            */
-/* Distinct function colors with crisp top highlight & slabs */
+/* AUTHENTIC 16-BIT PIXEL ART 3D PUSH BUTTONS                */
+/* Exact reproduction of reference arcade button UI          */
 /* ========================================================= */
 
-/* Mint Neon Primary Button (#62f6bd) */
-.balatro-btn-teal {
-  background: #62f6bd;
-  border: 2px solid #087d6a;
-  border-top: 2.5px solid #ffffff;
-  color: #003c5a;
+.arcade-pixel-btn,
+.arcade-pixel-btn *,
+.pixel-menu-btn,
+.pixel-menu-btn * {
+  font-family: 'Archivo', system-ui, sans-serif !important;
+  font-weight: 900 !important;
+}
+
+.arcade-pixel-btn,
+.pixel-menu-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   font-weight: 900;
-  box-shadow: inset 0 2px 0 #ffffff, 0 5px 0 #087d6a;
-  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
-}
-.balatro-btn-teal:hover {
-  background: #62f6bd;
-  filter: brightness(1.12);
-  transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 #ffffff, 0 6px 0 #087d6a;
-}
-.balatro-btn-teal:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 0 #087d6a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 14px;
+  border: 3.5px solid #891c1c;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  /* Top cap vertical alignment: 13px top, 25px bottom (centers label on top face) */
+  padding: 13px 20px 25px 20px;
+  line-height: 1;
+  transition: transform 0.07s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.07s cubic-bezier(0.2, 0.8, 0.2, 1),
+              padding 0.07s cubic-bezier(0.2, 0.8, 0.2, 1),
+              filter 0.07s ease;
+  image-rendering: pixelated;
+  text-rendering: geometricPrecision;
 }
 
-/* Sky Cyan Button (#00b6de) */
+.arcade-pixel-btn:hover,
+.pixel-menu-btn:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1.5px);
+}
+
+.arcade-pixel-btn:active,
+.pixel-menu-btn:active {
+  /* Mechanical depression: cap pushes down into the 3D skirt */
+  transform: translateY(6.5px);
+  padding: 17px 20px 21px 20px;
+}
+
+/* 0. WHITISH MAIN MENU BUTTON (Lemon Chiffon Cap, Crimson Outline & Text, 3D Skirt) */
+.arcade-btn-whitish,
+.pixel-btn-whitish,
+.pixel-btn-cream {
+  background: #fffbd4 !important;
+  color: #891c1c !important;
+  border: 3.5px solid #891c1c !important;
+  font-family: 'Archivo', system-ui, sans-serif !important;
+  font-weight: 900 !important;
+  box-shadow:
+    inset 0 3px 0 0 #ffffff,
+    inset 3px 0 0 0 #ffffff,
+    inset 0 -16px 0 0 #ebdca0,
+    inset 0 -14px 0 0 #dfce8a,
+    0 5px 0 0 #0d0d0d;
+}
+.arcade-btn-whitish:hover,
+.pixel-btn-whitish:hover,
+.pixel-btn-cream:hover {
+  background: #ffffff !important;
+  color: #891c1c !important;
+  filter: brightness(1.05);
+  box-shadow:
+    inset 0 3px 0 0 #ffffff,
+    inset 3px 0 0 0 #ffffff,
+    inset 0 -16px 0 0 #ebdca0,
+    inset 0 -14px 0 0 #dfce8a,
+    0 6.5px 0 0 #0d0d0d;
+}
+.arcade-btn-whitish:active,
+.pixel-btn-whitish:active,
+.pixel-btn-cream:active {
+  background: #f7f2c8 !important;
+  color: #891c1c !important;
+  transform: translateY(6.5px);
+  box-shadow:
+    inset 0 1.5px 0 0 #ffffff,
+    inset 1.5px 0 0 0 #ffffff,
+    inset 0 -8px 0 0 #ebdca0,
+    inset 0 -6px 0 0 #dfce8a,
+    0 1px 0 0 #0d0d0d;
+}
+
+/* 1. ROYAL AMETHYST VIOLET BUTTON (Rich bridge between Red & Blue) */
+.pixel-btn-play,
+.pixel-btn-burgundy,
+.balatro-btn-pink,
+.balatro-btn-burgundy,
+.balatro-btn-purple,
+.balatro-btn-blue,
+.pixel-btn-blue,
+.balatro-btn-neutral,
+.pixel-btn-neutral,
+.pixel-btn-settings,
+.balatro-btn-teal,
+.balatro-btn-green {
+  background: #7c3aed;
+  color: #ffffff;
+  border: 3.5px solid #0d0d0d;
+  box-shadow:
+    inset 0 3px 0 0 #c4b5fd,
+    inset 3px 0 0 0 #c4b5fd,
+    inset 0 -16px 0 0 #5b21b6,
+    inset 0 -14px 0 0 #3b0764,
+    0 4.5px 0 0 #0d0d0d;
+}
+.pixel-btn-play:hover,
+.pixel-btn-burgundy:hover,
+.balatro-btn-pink:hover,
+.balatro-btn-burgundy:hover,
+.balatro-btn-purple:hover,
+.balatro-btn-blue:hover,
+.pixel-btn-blue:hover,
+.balatro-btn-neutral:hover,
+.pixel-btn-neutral:hover,
+.pixel-btn-settings:hover,
+.balatro-btn-teal:hover,
+.balatro-btn-green:hover {
+  background: #8b5cf6;
+  filter: brightness(1.12);
+  box-shadow:
+    inset 0 3px 0 0 #ddd6fe,
+    inset 3px 0 0 0 #ddd6fe,
+    inset 0 -16px 0 0 #5b21b6,
+    inset 0 -14px 0 0 #3b0764,
+    0 6px 0 0 #0d0d0d;
+}
+.pixel-btn-play:active,
+.pixel-btn-burgundy:active,
+.balatro-btn-pink:active,
+.balatro-btn-burgundy:active,
+.balatro-btn-purple:active,
+.balatro-btn-blue:active,
+.pixel-btn-blue:active,
+.balatro-btn-neutral:active,
+.pixel-btn-neutral:active,
+.pixel-btn-settings:active,
+.balatro-btn-teal:active,
+.balatro-btn-green:active {
+  transform: translateY(6.5px);
+  box-shadow:
+    inset 0 1.5px 0 0 #c4b5fd,
+    inset 1.5px 0 0 0 #c4b5fd,
+    inset 0 -8px 0 0 #5b21b6,
+    inset 0 -6px 0 0 #3b0764,
+    0 1px 0 0 #0d0d0d;
+}
+
+/* 2. ELECTRIC INDIGO BUTTON */
+.pixel-btn-options,
 .balatro-btn-cyan {
-  background: #00b6de;
-  border: 2px solid #003c5a;
-  border-top: 2.5px solid #9cf6ff;
-  color: #0c1079;
-  font-weight: 900;
-  box-shadow: inset 0 2px 0 rgba(156, 246, 255, 0.6), 0 5px 0 #003c5a;
-  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+  background: #4f46e5;
+  color: #ffffff;
+  border: 3.5px solid #0d0d0d;
+  box-shadow:
+    inset 0 3px 0 0 #818cf8,
+    inset 3px 0 0 0 #818cf8,
+    inset 0 -16px 0 0 #3730a3,
+    inset 0 -14px 0 0 #1e1b4b,
+    0 4.5px 0 0 #0d0d0d;
 }
+.pixel-btn-options:hover,
 .balatro-btn-cyan:hover {
-  background: #00b6de;
-  filter: brightness(1.12);
-  transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(156, 246, 255, 0.8), 0 6px 0 #003c5a;
+  background: #6366f1;
+  box-shadow:
+    inset 0 3px 0 0 #a5b4fc,
+    inset 3px 0 0 0 #a5b4fc,
+    inset 0 -16px 0 0 #3730a3,
+    inset 0 -14px 0 0 #1e1b4b,
+    0 6px 0 0 #0d0d0d;
 }
+.pixel-btn-options:active,
 .balatro-btn-cyan:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(156, 246, 255, 0.3), 0 2px 0 #003c5a;
+  box-shadow:
+    inset 0 1.5px 0 0 #818cf8,
+    inset 1.5px 0 0 0 #818cf8,
+    inset 0 -8px 0 0 #3730a3,
+    inset 0 -6px 0 0 #1e1b4b,
+    0 1px 0 0 #0d0d0d;
 }
 
-/* Electric Azure Button (#107dee) */
-.balatro-btn-blue {
-  background: #107dee;
-  border: 2px solid #0c1079;
-  border-top: 2.5px solid #9cf6ff;
+/* 3. MIDNIGHT NAVY-VIOLET BUTTON (Secondary / Neutral) */
+.pixel-btn-exit,
+.balatro-btn-exit,
+.balatro-btn-slate {
+  background: #1e1b4b;
   color: #ffffff;
-  box-shadow: inset 0 2px 0 rgba(156, 246, 255, 0.45), 0 5px 0 #0c1079;
-  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+  border: 3.5px solid #0d0d0d;
+  box-shadow:
+    inset 0 3px 0 0 #4f46e5,
+    inset 3px 0 0 0 #4f46e5,
+    inset 0 -16px 0 0 #0f0e26,
+    inset 0 -14px 0 0 #080718,
+    0 4.5px 0 0 #0d0d0d;
 }
-.balatro-btn-blue:hover {
-  background: #107dee;
-  filter: brightness(1.15);
-  transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(156, 246, 255, 0.7), 0 6px 0 #0c1079;
+.pixel-btn-exit:hover,
+.balatro-btn-exit:hover,
+.balatro-btn-slate:hover {
+  background: #312e81;
+  box-shadow:
+    inset 0 3px 0 0 #6366f1,
+    inset 3px 0 0 0 #6366f1,
+    inset 0 -16px 0 0 #0f0e26,
+    inset 0 -14px 0 0 #080718,
+    0 6px 0 0 #0d0d0d;
 }
-.balatro-btn-blue:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(156, 246, 255, 0.25), 0 2px 0 #0c1079;
+.pixel-btn-exit:active,
+.balatro-btn-exit:active,
+.balatro-btn-slate:active {
+  box-shadow:
+    inset 0 1.5px 0 0 #4f46e5,
+    inset 1.5px 0 0 0 #4f46e5,
+    inset 0 -8px 0 0 #0f0e26,
+    inset 0 -6px 0 0 #080718,
+    0 1px 0 0 #0d0d0d;
 }
 
-/* Royal Violet Button (#4a34de) */
-.balatro-btn-purple {
-  background: #4a34de;
-  border: 2px solid #0c1079;
-  border-top: 2.5px solid #787bd1;
+/* 4. VIBRANT MAGENTA ORCHID BUTTON (Danger / Quit / Surrender - Perfect chromatic balance between Red & Blue) */
+.pixel-btn-start,
+.balatro-btn-orange,
+.balatro-btn-red {
+  background: #a21caf;
   color: #ffffff;
-  box-shadow: inset 0 2px 0 rgba(120, 123, 209, 0.35), 0 5px 0 #4a089c;
-  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+  border: 3.5px solid #0d0d0d;
+  box-shadow:
+    inset 0 3px 0 0 #f0abfc,
+    inset 3px 0 0 0 #f0abfc,
+    inset 0 -16px 0 0 #701a75,
+    inset 0 -14px 0 0 #4a044e,
+    0 4.5px 0 0 #0d0d0d;
 }
-.balatro-btn-purple:hover {
-  background: #4a34de;
-  filter: brightness(1.15);
-  transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(120, 123, 209, 0.6), 0 6px 0 #4a089c;
+.pixel-btn-start:hover,
+.balatro-btn-orange:hover,
+.balatro-btn-red:hover {
+  background: #c026d3;
+  filter: brightness(1.12);
+  box-shadow:
+    inset 0 3px 0 0 #fae8ff,
+    inset 3px 0 0 0 #fae8ff,
+    inset 0 -16px 0 0 #701a75,
+    inset 0 -14px 0 0 #4a044e,
+    0 6px 0 0 #0d0d0d;
 }
-.balatro-btn-purple:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(120, 123, 209, 0.2), 0 2px 0 #4a089c;
+.pixel-btn-start:active,
+.balatro-btn-orange:active,
+.balatro-btn-red:active {
+  transform: translateY(6.5px);
+  box-shadow:
+    inset 0 1.5px 0 0 #f0abfc,
+    inset 1.5px 0 0 0 #f0abfc,
+    inset 0 -8px 0 0 #701a75,
+    inset 0 -6px 0 0 #4a044e,
+    0 1px 0 0 #0d0d0d;
 }
 
-/* Dark Oceanic Slate Button (#003c5a) */
+/* 6. MENU / GOLD BUTTON (Canary Lemon Gold Cap, Deep Ochre Skirt, Dark Amber Text) */
+.pixel-btn-menu,
+.balatro-btn-yellow {
+  background: #eab308;
+  color: #422006;
+  border: 3.5px solid #0d0d0d;
+  box-shadow:
+    inset 0 3px 0 0 #fef08a,
+    inset 3px 0 0 0 #fef08a,
+    inset 0 -16px 0 0 #a16207,
+    inset 0 -14px 0 0 #713f12,
+    0 4.5px 0 0 #0d0d0d;
+}
+.pixel-btn-menu:hover,
+.balatro-btn-yellow:hover {
+  filter: brightness(1.1);
+  box-shadow:
+    inset 0 3px 0 0 #fef9c3,
+    inset 3px 0 0 0 #fef9c3,
+    inset 0 -16px 0 0 #a16207,
+    inset 0 -14px 0 0 #713f12,
+    0 6px 0 0 #0d0d0d;
+}
+.pixel-btn-menu:active,
+.balatro-btn-yellow:active {
+  transform: translateY(6.5px);
+  box-shadow:
+    inset 0 1.5px 0 0 #fef08a,
+    inset 1.5px 0 0 0 #fef08a,
+    inset 0 -8px 0 0 #a16207,
+    inset 0 -6px 0 0 #713f12,
+    0 1px 0 0 #0d0d0d;
+}
+
+/* 7. PAUSE BUTTON (Mauve Violet Cap, Deep Plum Purple Skirt, Dark Plum Text) */
+.pixel-btn-pause {
+  background: #b8598a;
+  color: #260b1e;
+  box-shadow:
+    inset 0 3px 0 0 #f298c7,
+    inset 3px 0 0 0 #f298c7,
+    inset 0 -16px 0 0 #8a3a63,
+    inset 0 -14px 0 0 #4e1e40,
+    0 4.5px 0 0 #0d0d0d;
+}
+.pixel-btn-pause:hover {
+  box-shadow:
+    inset 0 3px 0 0 #f9c6e0,
+    inset 3px 0 0 0 #f9c6e0,
+    inset 0 -16px 0 0 #8a3a63,
+    inset 0 -14px 0 0 #4e1e40,
+    0 6px 0 0 #0d0d0d;
+}
+.pixel-btn-pause:active {
+  box-shadow:
+    inset 0 1.5px 0 0 #f298c7,
+    inset 1.5px 0 0 0 #f298c7,
+    inset 0 -8px 0 0 #8a3a63,
+    inset 0 -6px 0 0 #4e1e40,
+    0 1px 0 0 #0d0d0d;
+}
+
+/* 8. DARK BUTTON (Dark Slate Cap, Deep Obsidian Skirt, Cream Text) */
+.pixel-btn-dark,
 .balatro-btn-dark {
-  background: #003c5a;
-  border: 2px solid #0c1079;
-  border-top: 2px solid #0071b4;
-  color: #9cf6ff;
-  box-shadow: inset 0 1.5px 0 rgba(156, 246, 255, 0.25), 0 4px 0 #0c1079;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  background: #222736;
+  color: #fffbd4;
+  box-shadow:
+    inset 0 3px 0 0 #444c66,
+    inset 3px 0 0 0 #444c66,
+    inset 0 -16px 0 0 #151824,
+    inset 0 -14px 0 0 #0a0d14,
+    0 4.5px 0 0 #0d0d0d;
 }
+.pixel-btn-dark:hover,
 .balatro-btn-dark:hover {
-  background: #003c5a;
-  filter: brightness(1.18);
-  border-color: #62f6bd;
-  transform: translateY(-1px);
-  box-shadow: inset 0 1.5px 0 rgba(98, 246, 189, 0.45), 0 5px 0 #0c1079;
+  box-shadow:
+    inset 0 3px 0 0 #5b668a,
+    inset 3px 0 0 0 #5b668a,
+    inset 0 -16px 0 0 #151824,
+    inset 0 -14px 0 0 #0a0d14,
+    0 6px 0 0 #0d0d0d;
 }
+.pixel-btn-dark:active,
 .balatro-btn-dark:active {
-  transform: translateY(2px);
-  box-shadow: inset 0 1px 0 rgba(98, 246, 189, 0.15), 0 2px 0 #0c1079;
+  box-shadow:
+    inset 0 1.5px 0 0 #444c66,
+    inset 1.5px 0 0 0 #444c66,
+    inset 0 -8px 0 0 #151824,
+    inset 0 -6px 0 0 #0a0d14,
+    0 1px 0 0 #0d0d0d;
+}
+
+/* Primary alias */
+.balatro-btn-primary {
+  background: #ef5368;
+  color: #fffbd4;
+  border: 3.5px solid #0d0d0d;
+  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, 0.5),
+              inset 0 -8px 0 #891c1c,
+              0 4.5px 0 #0d0d0d;
+  transition: transform 0.06s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.06s cubic-bezier(0.2, 0.8, 0.2, 1),
+              filter 0.06s ease;
+}
+.balatro-btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, 0.65),
+              inset 0 -8px 0 #891c1c,
+              0 5.5px 0 #0d0d0d;
+}
+.balatro-btn-primary:active {
+  transform: translateY(3.5px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              inset 0 -2.5px 0 #891c1c,
+              0 1px 0 #0d0d0d;
 }
 
 /* Ice White Button (#9cf6ff) */
 .balatro-btn-white {
-  background: #9cf6ff;
-  border: 2px solid #0071b4;
-  border-top: 2.5px solid #ffffff;
-  color: #0c1079;
-  font-weight: 900;
-  box-shadow: inset 0 2px 0 #ffffff, 0 5px 0 #0071b4;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  background: #e2e8f0;
+  border: 3.5px solid #1e293b;
+  color: #0f172a;
+  box-shadow: inset 0 2.5px 0 #ffffff,
+              inset 0 -8px 0 #94a3b8,
+              0 4.5px 0 #0f172a;
+  transition: transform 0.06s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.06s cubic-bezier(0.2, 0.8, 0.2, 1),
+              filter 0.06s ease;
 }
 .balatro-btn-white:hover {
-  background: #9cf6ff;
+  background: #f1f5f9;
   filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 #ffffff, 0 6px 0 #0071b4;
+  box-shadow: inset 0 2.5px 0 #ffffff,
+              inset 0 -8px 0 #94a3b8,
+              0 5.5px 0 #0f172a;
 }
 .balatro-btn-white:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(12, 16, 121, 0.35), 0 2px 0 #0c1079;
-}
-
-/* Red Button (for Quit / Delete) */
-.balatro-btn-red {
-  background: #b91c1c;
-  border: 2px solid #0c1079;
-  border-top: 2.5px solid rgba(255, 255, 255, 0.6);
-  color: #ffffff;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #0c1079;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-}
-.balatro-btn-red:hover {
-  background: #dc2626;
-  transform: translateY(-1px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 6px 0 #0c1079;
-}
-.balatro-btn-red:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #0c1079;
+  transform: translateY(3.5px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35),
+              inset 0 -2.5px 0 #94a3b8,
+              0 1px 0 #0f172a;
 }
 
 /* ========================================================= */
@@ -294,67 +573,60 @@
 }
 
 @keyframes pvz-portal-electric-idle {
-  0%, 100% {
-    filter: drop-shadow(0 0 16px rgba(98, 246, 189, 0.6));
-  }
-  48% {
-    filter: drop-shadow(0 0 16px rgba(98, 246, 189, 0.6));
-  }
-  50% {
-    filter: brightness(1.8) drop-shadow(0 0 40px #ffffff) drop-shadow(0 0 65px #62f6bd);
-  }
-  52% {
-    filter: brightness(1.1) drop-shadow(0 0 20px #00b6de);
-  }
-  54% {
-    filter: brightness(1.6) drop-shadow(0 0 35px #ffffff) drop-shadow(0 0 55px #9cf6ff);
-  }
-  57% {
-    filter: drop-shadow(0 0 16px rgba(98, 246, 189, 0.6));
-  }
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(239, 83, 104, 0.4)); }
+  48%       { filter: drop-shadow(0 0 10px rgba(239, 83, 104, 0.4)); }
+  50%       { filter: brightness(1.4) drop-shadow(0 0 22px #ffffff) drop-shadow(0 0 40px #ef5368); }
+  52%       { filter: brightness(1.05) drop-shadow(0 0 14px #891c1c); }
+  54%       { filter: brightness(1.3) drop-shadow(0 0 20px #ffffff) drop-shadow(0 0 35px #fffbd4); }
+  57%       { filter: drop-shadow(0 0 10px rgba(239, 83, 104, 0.4)); }
 }
 
 .arcade-neon-top {
-  font-family: 'Titan One', 'Impact', cursive, sans-serif !important;
+  font-family: 'Impact', 'Archivo', cursive, sans-serif !important;
   text-transform: uppercase;
-  color: #9cf6ff;
+  color: #ef5368;
   letter-spacing: 0.12em;
   text-shadow:
     0 0 3px #ffffff,
-    0 0 10px #62f6bd,
-    0 0 22px #00b6de,
-    2px 3px 0 #0c1079;
+    0 0 10px #ef5368,
+    0 0 22px #891c1c,
+    2px 3px 0 #0d0d0d;
 }
 
 .arcade-neon-100 {
-  font-family: 'Titan One', 'Impact', cursive, sans-serif !important;
-  color: #ffffff;
+  font-family: 'Impact', 'Archivo', cursive, sans-serif !important;
+  color: #fffbd4;
   letter-spacing: -0.02em;
   line-height: 0.88;
   text-shadow:
-    0 0 3px #ffffff,
-    0 0 12px #62f6bd,
-    0 0 24px #00b6de,
-    0 0 40px #3120cd,
-    4px 5px 0 #0c1079;
+    0 0 2px #ffffff,
+    0 0 10px #fffbd4,
+    0 0 20px #ef5368,
+    0 0 32px #891c1c,
+    4px 5px 0 #0d0d0d;
 }
 
-/* Fallback legacy title class */
 .balatro-title-text {
   font-family: 'Titan One', 'Impact', cursive, sans-serif !important;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: #ffffff;
+  color: #fffbd4;
   transform: skewX(-12deg);
   text-shadow:
     0 0 3px #ffffff,
-    0 0 10px #62f6bd,
-    0 0 22px #00b6de,
-    3px 3px 0 #0c1079;
+    0 0 10px #ef5368,
+    0 0 22px #891c1c,
+    3px 3px 0 #0d0d0d;
+}
+
+.balatro-subtitle-capsule {
+  background: #0d0d0d;
+  border: 2px solid #891c1c;
+  box-shadow: 0 4px 0 #05070f, inset 0 1px 0 rgba(255, 251, 212, 0.15);
 }
 
 /* ========================================================= */
-/* BALATRO-STYLE LOADING SCREEN (3D WOBBLE & ARCADE PROGRESS)*/
+/* BALATRO-STYLE LOADING SCREEN                              */
 /* ========================================================= */
 
 .balatro-loading-wobble {
@@ -387,57 +659,38 @@
 }
 
 @keyframes balatro-bar-progress {
-  0% {
-    width: 5%;
-    transform: translateX(0%);
-  }
-  50% {
-    width: 75%;
-    transform: translateX(25%);
-  }
-  100% {
-    width: 30%;
-    transform: translateX(220%);
-  }
+  0%   { width: 5%;  transform: translateX(0%); }
+  50%  { width: 75%; transform: translateX(25%); }
+  100% { width: 30%; transform: translateX(220%); }
 }
 
 /* ========================================================= */
 /* HOLLOW KNIGHT SPLIT CLOUD INDICATORS                      */
 /* ========================================================= */
 
-@keyframes cloud-half-pulse-left {
-  0% {
-    transform: translateX(0px) scale(0.96);
-    filter: drop-shadow(0 0 6px rgba(98, 246, 189, 0.8));
-  }
-  100% {
-    transform: translateX(-5px) scale(1.06);
-    filter: drop-shadow(0 0 14px rgba(0, 182, 222, 0.95));
-  }
+/* ========================================================= */
+/* MENU ARROW INDICATOR ANIMATIONS (CRIMSON & CORAL)         */
+/* ========================================================= */
+
+@keyframes arrow-nudge-left {
+  0%   { transform: translateX(0px) scale(0.96); filter: drop-shadow(0 0 8px rgba(137, 28, 28, 0.85)); }
+  100% { transform: translateX(4px) scale(1.08); filter: drop-shadow(0 0 16px rgba(239, 83, 104, 0.95)); }
+}
+@keyframes arrow-nudge-right {
+  0%   { transform: translateX(0px) scale(0.96); filter: drop-shadow(0 0 8px rgba(137, 28, 28, 0.85)); }
+  100% { transform: translateX(-4px) scale(1.08); filter: drop-shadow(0 0 16px rgba(239, 83, 104, 0.95)); }
 }
 
-@keyframes cloud-half-pulse-right {
-  0% {
-    transform: translateX(0px) scale(0.96);
-    filter: drop-shadow(0 0 6px rgba(98, 246, 189, 0.8));
-  }
-  100% {
-    transform: translateX(5px) scale(1.06);
-    filter: drop-shadow(0 0 14px rgba(0, 182, 222, 0.95));
-  }
-}
+.arrow-indicator-left  { animation: arrow-nudge-left 0.8s ease-in-out infinite alternate; }
+.arrow-indicator-right { animation: arrow-nudge-right 0.8s ease-in-out infinite alternate; }
 
-.cloud-half-left {
-  animation: cloud-half-pulse-left 1.2s ease-in-out infinite alternate;
-}
+/* Legacy cloud animations */
+.cloud-half-left  { animation: arrow-nudge-left  0.8s ease-in-out infinite alternate; }
+.cloud-half-right { animation: arrow-nudge-right 0.8s ease-in-out infinite alternate; }
 
-.cloud-half-right {
-  animation: cloud-half-pulse-right 1.2s ease-in-out infinite alternate;
-}
-
-/* Clean, un-boxed Hollow Knight Menu Item */
+/* Clean Hollow Knight Menu Item */
 .hk-menu-item {
-  font-family: 'Silkscreen', monospace, sans-serif !important;
+  font-family: 'Archivo', sans-serif !important;
   background: transparent;
   border: none;
   outline: none;
@@ -449,7 +702,6 @@
   color: rgba(156, 246, 255, 0.85);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85);
 }
-
 .hk-menu-item:hover,
 .hk-menu-item-active {
   color: #ffffff !important;
@@ -460,54 +712,43 @@
     0 0 28px #00b6de !important;
 }
 
-/* Subtitle segment capsule */
-.balatro-subtitle-capsule {
-  background: rgba(0, 60, 90, 0.85);
-  border: 2px solid #787bd1;
-  box-shadow: 
-    0 4px 14px rgba(12, 16, 121, 0.9), 
-    0 0 14px rgba(98, 246, 189, 0.25),
-    inset 0 1px 0 rgba(156, 246, 255, 0.3);
-}
-
 /* ========================================================= */
-/* NUMBER TILES DEPTH (#003c5a Unrevealed, #62f6bd Revealed) */
+/* NUMBER / QUESTION TILES                                   */
+/* Outline of the questions lemon chiffon (#fffbd4)          */
 /* ========================================================= */
 
 .balatro-tile-unrevealed {
-  background: #003c5a;
-  border: 1.5px solid #4d6b75;
-  border-bottom: 3.5px solid #0c1079;
-  box-shadow: 0 3px 0 #0c1079, inset 0 1.5px 0 rgba(156, 246, 255, 0.16);
-  transition: transform 0.1s ease, border-color 0.1s ease;
+  background: #0a0f23;
+  border: 2px solid #fffbd4;
+  border-bottom: 3.5px solid #fffbd4;
+  box-shadow: 0 3px 0 #0d0d0d, inset 0 1.5px 0 rgba(255, 251, 212, 0.25);
+  color: #fffbd4;
+  transition: transform 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
 }
 .balatro-tile-unrevealed:hover {
   transform: translateY(-2px);
-  border-color: #62f6bd;
-  box-shadow: 0 4px 0 #0c1079, inset 0 1.5px 0 rgba(98, 246, 189, 0.35);
+  border-color: #fffbd4;
+  box-shadow: 0 4px 0 #0d0d0d, 0 0 14px rgba(255, 251, 212, 0.75);
 }
-
 .balatro-tile-revealed {
-  background: #62f6bd;
-  border: 1.5px solid #10aa83;
-  border-bottom: 3.5px solid #087d6a;
-  box-shadow: 0 3px 0 #0c1079, inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
-  color: #003c5a;
+  background: #891c1c;
+  border: 2px solid #fffbd4;
+  border-bottom: 3.5px solid #ef5368;
+  box-shadow: 0 3px 0 #0d0d0d, inset 0 1.5px 0 rgba(255, 251, 212, 0.5);
+  color: #fffbd4;
 }
 
 /* ========================================================= */
-/* STRICTLY RESERVED NEON GLOWS                              */
-/* 1. CURRENT GUESSER                                        */
-/* 2. LAST GUESSED TILE                                      */
+/* NEON GLOWS – CURRENT GUESSER & LAST GUESSED TILE         */
 /* ========================================================= */
 
 .neon-guesser-highlight {
-  border: 3px solid #62f6bd !important;
+  border: 3px solid #fffbd4 !important;
   border-radius: 1rem !important;
-  box-shadow: 
-    0 0 18px rgba(98, 246, 189, 0.95),
-    0 0 35px rgba(0, 182, 222, 0.5),
-    inset 0 0 10px rgba(98, 246, 189, 0.3) !important;
+  box-shadow:
+    0 0 18px rgba(239, 83, 104, 0.95),
+    0 0 35px rgba(255, 251, 212, 0.5),
+    inset 0 0 10px rgba(239, 83, 104, 0.3) !important;
   animation: guesser-pulse 2s ease-in-out infinite;
   z-index: 20;
   overflow: hidden;
@@ -515,45 +756,254 @@
 
 @keyframes guesser-pulse {
   0%, 100% {
-    box-shadow: 0 0 14px rgba(98, 246, 189, 0.85), 0 0 28px rgba(0, 182, 222, 0.45), inset 0 0 8px rgba(98, 246, 189, 0.25);
-    border-color: #62f6bd;
+    box-shadow: 0 0 14px rgba(239, 83, 104, 0.85), 0 0 28px rgba(255, 251, 212, 0.45), inset 0 0 8px rgba(239, 83, 104, 0.25);
+    border-color: #fffbd4;
   }
   50% {
-    box-shadow: 0 0 26px rgba(255, 255, 255, 1), 0 0 48px rgba(156, 246, 255, 0.85), inset 0 0 14px rgba(98, 246, 189, 0.5);
-    border-color: #9cf6ff;
+    box-shadow: 0 0 26px rgba(255, 255, 255, 1), 0 0 48px rgba(239, 83, 104, 0.85), inset 0 0 14px rgba(255, 251, 212, 0.5);
+    border-color: #ef5368;
   }
 }
 
 .neon-last-guessed-tile {
-  background: #ffffff !important;
-  border: 2px solid #62f6bd !important;
-  color: #003c5a !important;
-  box-shadow: 
-    0 0 20px #62f6bd,
-    0 0 40px #00b6de,
-    inset 0 0 12px rgba(255, 255, 255, 0.95) !important;
+  background: linear-gradient(180deg, #22c55e 0%, #15803d 100%) !important;
+  border: 2.5px solid #86efac !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 20px rgba(34, 197, 94, 0.9),
+    0 0 35px rgba(21, 128, 61, 0.6),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45) !important;
   animation: tile-neon-reveal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   z-index: 25;
 }
 
 @keyframes tile-neon-reveal {
-  0% { transform: scale(0.85); opacity: 0; }
-  60% { transform: scale(1.12); opacity: 1; }
+  0%   { transform: scale(0.85); opacity: 0; }
+  60%  { transform: scale(1.12); opacity: 1; }
   100% { transform: scale(1.06); opacity: 1; }
 }
 
-/* Custom Scrollbar in the 15-Color Palette */
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+/* ========================================================= */
+/* CUSTOM SCROLLBAR                                          */
+/* ========================================================= */
+::-webkit-scrollbar        { width: 7px; height: 7px; }
+::-webkit-scrollbar-track  { background: #0d0d0d; }
+::-webkit-scrollbar-thumb  { background: #891c1c; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #ef5368; }
+
+/* ========================================================= */
+/* MAIN MENU ARROWS & SELECTION (RED DEFAULT)                */
+/* ========================================================= */
+.menu-arrow-svg {
+  filter: drop-shadow(0 0 14px rgba(137, 28, 28, 0.95));
 }
-::-webkit-scrollbar-track {
-  background: #0c1079;
+.arrow-chevron-outer {
+  fill: #891c1c;
 }
-::-webkit-scrollbar-thumb {
-  background: #0071b4;
-  border-radius: 4px;
+.arrow-chevron-inner {
+  fill: #ef5368;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #62f6bd;
+
+.match-mode-card-selected {
+  box-shadow: 0 5px 0 #891c1c !important;
+}
+
+.cat-card-selected {
+  border-bottom: 4px solid #891c1c !important;
+  box-shadow: 0 4px 0 #0d0d0d, inset 0 1.5px 0 rgba(255, 251, 212, 0.25) !important;
+}
+
+.cat-card-unselected {
+  background: #0a0f23;
+  border: 2px solid #891c1c;
+  border-bottom: 4px solid #891c1c;
+  box-shadow: 0 4px 0 #0d0d0d;
+}
+.cat-card-unselected:hover {
+  border-color: #ef5368;
+  border-bottom-color: #ef5368;
+  background: rgba(10, 15, 35, 0.9);
+}
+
+.cat-selected-badge {
+  background: #fffbd4;
+  color: #0d0d0d;
+  box-shadow: 0 2px 0 #891c1c;
+}
+
+.cat-count-badge-selected {
+  background: #891c1c;
+  color: #fffbd4;
+}
+
+.cat-status-selected {
+  color: #ef5368;
+}
+
+/* ========================================================= */
+/* BLUE THEME PALETTE MODE                                   */
+/* Transforms all red and coral shades into sapphire & cyan  */
+/* ========================================================= */
+.theme-blue {
+  --color-crimson: #1e40af;
+  --color-coral: #38bdf8;
+}
+
+/* Card, Panel, Modal borders */
+.theme-blue .balatro-card,
+.theme-blue .balatro-card-interactive,
+.theme-blue .balatro-panel,
+.theme-blue .balatro-modal {
+  border-color: #1e40af !important;
+}
+
+/* Red & Coral Border Overrides */
+.theme-blue [class*="border-[#891c1c]"],
+.theme-blue [class*="border-\\[\\#891c1c\\]"],
+.theme-blue [class*="border-b-[#891c1c]"] {
+  border-color: #1e40af !important;
+}
+
+.theme-blue [class*="border-[#ef5368]"],
+.theme-blue [class*="border-\\[\\#ef5368\\]"],
+.theme-blue [class*="border-rose-400"] {
+  border-color: #38bdf8 !important;
+}
+
+/* Red & Coral Text Overrides */
+.theme-blue [class*="text-[#891c1c]"],
+.theme-blue [class*="text-\\[\\#891c1c\\]"] {
+  color: #60a5fa !important;
+}
+
+.theme-blue [class*="text-[#ef5368]"],
+.theme-blue [class*="text-\\[\\#ef5368\\]"],
+.theme-blue [class*="text-rose-400"] {
+  color: #38bdf8 !important;
+}
+
+/* Red & Coral Background Overrides */
+.theme-blue [class*="bg-[#891c1c]"],
+.theme-blue [class*="bg-\\[\\#891c1c\\]"] {
+  background-color: #1e40af !important;
+}
+
+.theme-blue [class*="bg-[#ef5368]"],
+.theme-blue [class*="bg-\\[\\#ef5368\\]"] {
+  background-color: #0284c7 !important;
+}
+
+/* Red & Coral Ring Overrides */
+.theme-blue [class*="ring-[#ef5368]"],
+.theme-blue [class*="ring-rose-400"] {
+  --tw-ring-color: #38bdf8 !important;
+}
+
+/* 1. Neon title in Blue Mode */
+.theme-blue .arcade-neon-top {
+  color: #38bdf8 !important;
+  text-shadow:
+    0 0 3px #ffffff,
+    0 0 10px #38bdf8,
+    0 0 22px #1e40af,
+    2px 3px 0 #0d0d0d !important;
+}
+
+.theme-blue .arcade-neon-100 {
+  color: #fffbd4 !important;
+  text-shadow:
+    0 0 2px #ffffff,
+    0 0 10px #fffbd4,
+    0 0 20px #38bdf8,
+    0 0 35px #1e40af,
+    4px 5px 0 #0d0d0d !important;
+}
+
+.theme-blue .pvz-portal-pop {
+  animation: pvz-portal-lightning-pop 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+             pvz-portal-electric-idle-blue 5s ease-in-out infinite 0.75s !important;
+}
+
+@keyframes pvz-portal-electric-idle-blue {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5)); }
+  48%       { filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5)); }
+  50%       { filter: brightness(1.4) drop-shadow(0 0 22px #ffffff) drop-shadow(0 0 40px #38bdf8); }
+  52%       { filter: brightness(1.05) drop-shadow(0 0 16px #1e40af); }
+  54%       { filter: brightness(1.3) drop-shadow(0 0 20px #ffffff) drop-shadow(0 0 35px #fffbd4); }
+  57%       { filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5)); }
+}
+
+/* 2. Main Menu Chevrons in Blue Mode */
+.theme-blue .menu-arrow-svg {
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.95)) !important;
+}
+.theme-blue .arrow-chevron-outer {
+  fill: #1e40af !important;
+}
+.theme-blue .arrow-chevron-inner {
+  fill: #38bdf8 !important;
+}
+
+/* 3. Match Mode Selection in Blue Mode */
+.theme-blue .match-mode-card-selected {
+  box-shadow: 0 5px 0 #1e40af !important;
+  border-color: #38bdf8 !important;
+}
+
+/* 4. Category Cards in Blue Mode */
+.theme-blue .cat-card-selected {
+  border-color: #38bdf8 !important;
+  border-bottom: 4px solid #1e40af !important;
+  box-shadow: 0 4px 0 #0d0d0d, 0 0 14px rgba(56, 189, 248, 0.45) !important;
+}
+.theme-blue .cat-card-unselected {
+  border-color: #1e40af !important;
+  border-bottom-color: #1e40af !important;
+}
+.theme-blue .cat-card-unselected:hover {
+  border-color: #38bdf8 !important;
+  border-bottom-color: #38bdf8 !important;
+}
+
+/* 5. Selected Category Badges & Checkmarks in Blue Mode */
+.theme-blue .cat-selected-badge {
+  background-color: #38bdf8 !important;
+  color: #041226 !important;
+  box-shadow: 0 2px 0 #1e40af !important;
+}
+.theme-blue .cat-count-badge-selected {
+  background-color: #1e40af !important;
+  color: #fffbd4 !important;
+}
+.theme-blue .cat-status-selected {
+  color: #38bdf8 !important;
+}
+
+/* Whitish arcade menu button in Blue Mode */
+.theme-blue .arcade-btn-whitish,
+.theme-blue .pixel-btn-whitish,
+.theme-blue .pixel-btn-cream {
+  color: #1e40af !important;
+  border-color: #1e40af !important;
+}
+
+.theme-blue .arcade-pixel-btn,
+.theme-blue .pixel-menu-btn {
+  border-color: #1e40af !important;
+}
+
+/* Guessing card active pulse in Blue Mode */
+.theme-blue .guesser-card-active {
+  box-shadow:
+    0 0 18px rgba(56, 189, 248, 0.95),
+    0 0 35px rgba(255, 251, 212, 0.5),
+    inset 0 0 10px rgba(56, 189, 248, 0.3) !important;
+}
+
+/* Scrollbar in Blue Mode */
+.theme-blue ::-webkit-scrollbar-thumb {
+  background: #1e40af !important;
+}
+.theme-blue ::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8 !important;
 }

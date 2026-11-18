@@ -3,32 +3,43 @@ import { soundFx } from '../soundFx';
 
 interface MainMenuProps {
   onPlay: () => void;
+  onOnlinePlay?: () => void;
   onHowToPlay: () => void;
   onSettings: () => void;
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
 }
 
-// Hollow Knight indicator: One cloud split in half on both sides
-function SplitCloudIndicator({ side }: { side: 'left' | 'right' }): React.JSX.Element {
+// Indicator: Chunky Glowing Arcade Arrows pointing towards selected button (Crimson/Coral in Red mode, Sapphire/Cyan in Blue mode)
+function MenuArrowIndicator({ side }: { side: 'left' | 'right' }): React.JSX.Element {
   return (
     <div
       className={`pointer-events-none flex items-center transition-all duration-300 ${
-        side === 'left' ? 'cloud-half-left' : 'cloud-half-right'
+        side === 'left' ? 'arrow-indicator-left' : 'arrow-indicator-right'
       }`}
     >
       <svg
-        viewBox="0 0 32 36"
-        className="w-8 h-9 sm:w-9 sm:h-10 text-[#62f6bd] drop-shadow-[0_0_12px_rgba(98,246,189,0.95)] filter"
-        fill="currentColor"
+        viewBox="0 0 36 36"
+        className="menu-arrow-svg w-8 h-8 sm:w-9 sm:h-9 filter"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
         style={{ transform: side === 'right' ? 'scaleX(-1)' : 'none' }}
       >
-        {/* Left half of a split cloud: flat vertical inner seam on the right, puffy lobes on the outer left */}
-        <path d="M 30 2 C 22 2 15 6 12 12 C 5 13 0 18 0 24 C 0 30 5 34 12 34 C 18 34 25 32 30 30 Z" />
-        {/* Crisp inner cut seam highlight */}
-        <line x1="30" y1="2" x2="30" y2="30" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" />
-        {/* Small floating outer vapor dot */}
-        <circle cx="5" cy="30" r="2.5" opacity="0.6" />
+        {/* Outer thick chevron pointing right */}
+        <path
+          className="arrow-chevron-outer"
+          d="M 6 6 L 22 18 L 6 30 L 12 30 L 28 18 L 12 6 Z"
+          stroke="#0d0d0d"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        {/* Inner neon accent chevron */}
+        <path
+          className="arrow-chevron-inner"
+          d="M 10 10 L 21 18 L 10 26 L 14 26 L 25 18 L 14 10 Z"
+        />
+        {/* Leading apex highlight dot */}
+        <circle cx="28" cy="18" r="2" fill="#fffbd4" />
       </svg>
     </div>
   );
@@ -36,15 +47,19 @@ function SplitCloudIndicator({ side }: { side: 'left' | 'right' }): React.JSX.El
 
 export default function MainMenu({
   onPlay,
+  onOnlinePlay,
   onHowToPlay,
   onSettings,
   onToggleFullscreen,
   isFullscreen
 }: MainMenuProps): React.JSX.Element {
-  // Hollow Knight menu selection tracking (supports mouse hover & keyboard arrow navigation)
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const [showQuitModal, setShowQuitModal] = useState<boolean>(false);
+  const [hasExitedMessage, setHasExitedMessage] = useState<boolean>(false);
 
-  const handleQuit = (): void => {
+  const confirmQuit = (): void => {
+    soundFx.playClick();
+    setHasExitedMessage(true);
     try {
       window.close();
     } catch {
@@ -57,7 +72,7 @@ export default function MainMenu({
       } catch {
         // ignore
       }
-    }, 100);
+    }, 150);
   };
 
   const menuItems = [
@@ -65,41 +80,65 @@ export default function MainMenu({
       id: 'play',
       label: 'PLAY GAME',
       action: () => { soundFx.playFanfare(); onPlay(); },
-      btnClass: 'balatro-btn-teal font-black text-lg py-3.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-lg w-full text-[#003c5a]'
+      btnClass: 'arcade-pixel-btn arcade-btn-whitish text-xl sm:text-2xl shadow-lg'
+    },
+    {
+      id: 'online',
+      label: 'ONLINE PLAY',
+      action: () => {
+        soundFx.playFanfare();
+        if (onOnlinePlay) {
+          onOnlinePlay();
+        } else {
+          alert('Online Play Lobby opening...');
+        }
+      },
+      btnClass: 'arcade-pixel-btn arcade-btn-whitish text-lg sm:text-xl shadow-md'
     },
     {
       id: 'how_to_play',
       label: 'HOW TO PLAY',
       action: () => { soundFx.playClick(); onHowToPlay(); },
-      btnClass: 'balatro-btn-cyan font-black text-sm py-2.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-md w-full'
+      btnClass: 'arcade-pixel-btn arcade-btn-whitish text-lg sm:text-xl shadow-md'
     },
     {
       id: 'settings',
       label: 'SETTINGS',
       action: () => { soundFx.playClick(); onSettings(); },
-      btnClass: 'balatro-btn-purple font-black text-sm py-2.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-md w-full'
+      btnClass: 'arcade-pixel-btn arcade-btn-whitish text-lg sm:text-xl shadow-md'
     },
     {
       id: 'quit',
       label: 'QUIT GAME',
+      isQuit: true,
       action: () => {
         soundFx.playClick();
-        handleQuit();
+        setShowQuitModal(true);
       },
-      btnClass: 'balatro-btn-red font-black text-sm py-2.5 px-6 rounded-xl tracking-wider cursor-pointer uppercase shadow-md w-full'
+      btnClass: 'arcade-pixel-btn arcade-btn-whitish text-lg sm:text-xl shadow-md'
     }
   ];
 
-  // Keyboard navigation (Arrow keys + Enter) like classic Hollow Knight / arcade
+  // Keyboard navigation (Arrow keys + Enter)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (showQuitModal) {
+        if (e.key === 'Escape') {
+          soundFx.playClick();
+          setShowQuitModal(false);
+        } else if (e.key === 'Enter') {
+          confirmQuit();
+        }
+        return;
+      }
+
       if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
         e.preventDefault();
-        soundFx.playClick();
+        soundFx.playHover();
         setSelectedIndex((prev) => (prev + 1) % menuItems.length);
       } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
         e.preventDefault();
-        soundFx.playClick();
+        soundFx.playHover();
         setSelectedIndex((prev) => (prev - 1 + menuItems.length) % menuItems.length);
       } else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -109,18 +148,24 @@ export default function MainMenu({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIndex]);
+  }, [selectedIndex, showQuitModal]);
 
   return (
-    <div className="relative z-10 flex flex-col items-center justify-center min-h-[85vh] p-4 text-center">
-      
-      {/* Top utility bar: fullscreen symbol */}
+    <div
+      className="relative z-10 flex flex-col items-center justify-center min-h-[85vh] pt-14 pb-6 px-4 text-center"
+      style={{ fontFamily: "'Archivo', system-ui, sans-serif" }}
+    >
+      {/* Top utility bar: fullscreen symbol only (quit button removed from top-right) */}
       {!isFullscreen && (
-        <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+        <div className="absolute top-4 right-4 flex items-center gap-3 z-20">
           <button
             type="button"
-            onClick={onToggleFullscreen}
-            className="balatro-btn-dark w-10 h-10 rounded-xl flex items-center justify-center text-slate-200 cursor-pointer transition active:translate-y-0.5"
+            onClick={() => {
+              soundFx.playClick();
+              onToggleFullscreen();
+            }}
+            onMouseEnter={() => soundFx.playHover()}
+            className="balatro-btn-dark w-11 h-11 rounded-xl flex items-center justify-center text-[#fffbd4] cursor-pointer transition active:translate-y-0.5"
             title="Fullscreen"
             aria-label="Fullscreen"
           >
@@ -131,7 +176,7 @@ export default function MainMenu({
         </div>
       )}
 
-      {/* Title Segment (Photoshop skewed Balatro Titan One font, 'TOP' in top-left, massive '100') */}
+      {/* Title Segment */}
       <div className="mb-8 flex flex-col items-center select-none relative">
         <h1 className="arcade-skew-title pvz-portal-pop">
           <span className="arcade-neon-top text-3xl sm:text-4xl md:text-5xl pl-1">
@@ -141,17 +186,10 @@ export default function MainMenu({
             100
           </span>
         </h1>
-
-        {/* Subtitle segment with reduced compact black capsule */}
-        <div className="balatro-subtitle-capsule px-4 py-1.5 rounded-full inline-flex items-center justify-center mt-5 max-w-md">
-          <p className="text-[#9cf6ff] font-black tracking-wider text-[10px] md:text-xs uppercase">
-            Uncover hidden rankings. Outscore the competition.
-          </p>
-        </div>
       </div>
 
-      {/* Central Menu: Chunky Arcade Boxed Buttons with Split Cloud Indicators */}
-      <div className="flex flex-col gap-3.5 w-full max-w-xs relative">
+      {/* Central Menu: Pixel Art 3D Beveled Buttons with Split Cloud Indicators */}
+      <div className="flex flex-col gap-4 w-full max-w-sm relative">
         {menuItems.map((item, idx) => {
           const isSelected = selectedIndex === idx;
 
@@ -160,47 +198,92 @@ export default function MainMenu({
               key={item.id}
               className="relative flex items-center justify-center w-full"
               onMouseEnter={() => {
-                if (selectedIndex !== idx) {
-                  soundFx.playClick();
-                  setSelectedIndex(idx);
-                }
+                soundFx.playHover();
+                setSelectedIndex(idx);
               }}
             >
-              {/* Left Half of Split Cloud */}
+              {/* Left Glowing Arrow Indicator */}
               <div
-                className={`absolute -left-11 sm:-left-12 transition-all duration-200 flex items-center justify-center z-20 ${
+                className={`absolute -left-11 sm:-left-13 transition-all duration-200 flex items-center justify-center z-20 pointer-events-none ${
                   isSelected
                     ? 'opacity-100 translate-x-0 scale-100'
-                    : 'opacity-0 translate-x-3 scale-75 pointer-events-none'
+                    : 'opacity-0 translate-x-3 scale-75'
                 }`}
+                style={{ top: 'calc(50% - 6px)' }}
               >
-                <SplitCloudIndicator side="left" />
+                <MenuArrowIndicator side="left" />
               </div>
 
-              {/* Chunky Arcade Boxed Button */}
+              {/* Chunky Pixel Art 3D Push Button without any logo */}
               <button
                 type="button"
                 onClick={item.action}
                 className={item.btnClass}
               >
-                {item.label}
+                <span>{item.label}</span>
               </button>
 
-              {/* Right Half of Split Cloud */}
+              {/* Right Glowing Arrow Indicator */}
               <div
-                className={`absolute -right-11 sm:-right-12 transition-all duration-200 flex items-center justify-center z-20 ${
+                className={`absolute -right-11 sm:-right-13 transition-all duration-200 flex items-center justify-center z-20 pointer-events-none ${
                   isSelected
                     ? 'opacity-100 translate-x-0 scale-100'
-                    : 'opacity-0 -translate-x-3 scale-75 pointer-events-none'
+                    : 'opacity-0 -translate-x-3 scale-75'
                 }`}
+                style={{ top: 'calc(50% - 6px)' }}
               >
-                <SplitCloudIndicator side="right" />
+                <MenuArrowIndicator side="right" />
               </div>
             </div>
           );
         })}
       </div>
 
+      {/* Retro Arcade Quit Confirmation Modal (logo removed) */}
+      {showQuitModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
+          <div className="balatro-modal p-6 md:p-8 rounded-3xl max-w-md w-full text-center border-4 border-[#891c1c] shadow-[0_12px_0_#0d0d0d] animate-in zoom-in-95 duration-150 bg-[#0a0f23]">
+            <h3 className="text-2xl md:text-3xl font-black text-[#ef5368] uppercase tracking-wider mb-3 drop-shadow-[0_2px_0_#0d0d0d]">
+              Quit Game?
+            </h3>
+
+            {hasExitedMessage ? (
+              <p className="text-sm md:text-base text-[#fffbd4] font-bold mb-6 leading-relaxed">
+                Game closed. You can now safely close this browser tab or window.
+              </p>
+            ) : (
+              <p className="text-sm md:text-base text-[#fffbd4]/90 font-bold mb-6 leading-relaxed">
+                Are you sure you want to quit Top 100?
+              </p>
+            )}
+
+            <div className="flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  setShowQuitModal(false);
+                  setHasExitedMessage(false);
+                }}
+                onMouseEnter={() => soundFx.playHover()}
+                className="arcade-pixel-btn pixel-btn-dark text-sm sm:text-base cursor-pointer min-w-[120px]"
+              >
+                Cancel
+              </button>
+              {!hasExitedMessage && (
+                <button
+                  type="button"
+                  onClick={confirmQuit}
+                  onMouseEnter={() => soundFx.playHover()}
+                  className="arcade-pixel-btn balatro-btn-red text-white text-sm sm:text-base cursor-pointer flex items-center justify-center min-w-[130px]"
+                >
+                  <span>Yes, Quit</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

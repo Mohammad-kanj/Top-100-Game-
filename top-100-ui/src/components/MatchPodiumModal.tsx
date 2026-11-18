@@ -4,6 +4,7 @@ import { GameState } from '../types';
 
 interface MatchPodiumModalProps {
   gameState: GameState;
+  isHost?: boolean;
   onRematch: () => void;
   onReturnMenu: () => void;
 }
@@ -14,7 +15,7 @@ interface StandingTeam {
   originalIdx: number;
 }
 
-export default function MatchPodiumModal({ gameState, onRematch, onReturnMenu }: MatchPodiumModalProps): React.JSX.Element {
+export default function MatchPodiumModal({ gameState, isHost = true, onRematch, onReturnMenu }: MatchPodiumModalProps): React.JSX.Element {
   const teams = gameState.teams || [];
   const matchScores = gameState.match_scores || [];
 
@@ -38,14 +39,14 @@ export default function MatchPodiumModal({ gameState, onRematch, onReturnMenu }:
       <div className="balatro-modal rounded-3xl w-full max-w-xl overflow-hidden flex flex-col text-center">
         
         {/* Banner */}
-        <div className="p-7 bg-[#003c5a] border-b-2 border-[#0071b4]">
-          <div className="text-xs font-black text-[#9cf6ff] uppercase tracking-widest mb-1">
+        <div className="p-7 bg-[#0d0d0d] border-b-2 border-[#891c1c]">
+          <div className="text-xs font-black text-[#ef5368] uppercase tracking-widest mb-1">
             Tournament Champions
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase drop-shadow-[0_3px_0_#0c1079]">
+          <h1 className="text-4xl md:text-5xl font-black text-[#fffbd4] tracking-tight uppercase drop-shadow-[0_3px_0_#0d0d0d]">
             Victory Podium
           </h1>
-          <p className="text-xs font-bold text-[#6ad6cd]/80 mt-1">
+          <p className="text-xs font-bold text-[#fffbd4]/70 mt-1">
             Cumulative scores across {gameState.total_rounds || 1} tournament rounds
           </p>
         </div>
@@ -56,37 +57,37 @@ export default function MatchPodiumModal({ gameState, onRematch, onReturnMenu }:
           {/* 2nd Place */}
           {second && (
             <div className="flex-1 flex flex-col items-center">
-              <div className="text-xs font-black text-[#00b6de] uppercase mb-0.5">2nd Place</div>
-              <div className="font-black text-sm text-white truncate max-w-[110px] mb-1">{second.team}</div>
-              <div className="text-lg font-black text-[#9cf6ff] mb-2 drop-shadow-[0_1px_0_#0c1079]">{second.score} pts</div>
-              <div className="w-full bg-[#00b6de] border-2 border-[#0c1079] border-t-4 border-t-white rounded-t-2xl h-22 flex items-center justify-center shadow-[0_4px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.25)]">
-                <span className="text-2xl font-black text-white">2</span>
+              <div className="text-xs font-black text-[#ef5368] uppercase mb-0.5">2nd Place</div>
+              <div className="font-black text-sm text-[#fffbd4] truncate max-w-[110px] mb-1">{second.team}</div>
+              <div className="text-lg font-black text-[#ef5368] mb-2 drop-shadow-[0_1px_0_#0d0d0d]">{second.score} pts</div>
+              <div className="w-full bg-[#ef5368] border-2 border-[#0d0d0d] border-t-4 border-t-[#fffbd4] rounded-t-2xl h-22 flex items-center justify-center shadow-[0_4px_0_#0d0d0d,inset_0_2px_0_rgba(255,255,255,0.25)]">
+                <span className="text-2xl font-black text-[#fffbd4]">2</span>
               </div>
             </div>
           )}
 
           {/* 1st Place (Champion) */}
           <div className="flex-1 flex flex-col items-center -translate-y-3">
-            <div className="text-xs font-black text-[#62f6bd] uppercase mb-0.5">Winner</div>
-            <div className="font-black text-base text-white truncate max-w-[130px] mb-1 drop-shadow-[0_1px_0_#0c1079]">
+            <div className="text-xs font-black text-[#fffbd4] uppercase mb-0.5">Winner</div>
+            <div className="font-black text-base text-[#fffbd4] truncate max-w-[130px] mb-1 drop-shadow-[0_1px_0_#0d0d0d]">
               {champion.team}
             </div>
-            <div className="text-2xl font-black text-[#62f6bd] mb-2 drop-shadow-[0_2px_0_#0c1079]">
+            <div className="text-2xl font-black text-[#fffbd4] mb-2 drop-shadow-[0_2px_0_#0d0d0d]">
               {champion.score} pts
             </div>
-            <div className="w-full bg-[#62f6bd] border-2 border-[#087d6a] border-t-4 border-t-white rounded-t-2xl h-32 flex items-center justify-center shadow-[0_6px_0_#0c1079,inset_0_2px_0_rgba(255,255,255,0.55)]">
-              <span className="text-4xl font-black text-[#003c5a]">1</span>
+            <div className="w-full bg-[#fffbd4] border-2 border-[#0d0d0d] border-t-4 border-t-white rounded-t-2xl h-32 flex items-center justify-center shadow-[0_6px_0_#0d0d0d,inset_0_2px_0_rgba(255,255,255,0.55)]">
+              <span className="text-4xl font-black text-[#0d0d0d]">1</span>
             </div>
           </div>
 
           {/* 3rd Place */}
           {third && (
             <div className="flex-1 flex flex-col items-center">
-              <div className="text-xs font-black text-[#787bd1] uppercase mb-0.5">3rd Place</div>
-              <div className="font-black text-sm text-white truncate max-w-[110px] mb-1">{third.team}</div>
-              <div className="text-lg font-black text-[#9cf6ff] mb-2 drop-shadow-[0_1px_0_#0c1079]">{third.score} pts</div>
-              <div className="w-full bg-[#4a34de] border-2 border-[#3120cd] border-t-4 border-t-[#62f6bd] rounded-t-2xl h-16 flex items-center justify-center shadow-[0_4px_0_#0c1079,inset_0_2px_0_rgba(98,246,189,0.2)]">
-                <span className="text-xl font-black text-[#9cf6ff]">3</span>
+              <div className="text-xs font-black text-[#891c1c] uppercase mb-0.5">3rd Place</div>
+              <div className="font-black text-sm text-[#fffbd4] truncate max-w-[110px] mb-1">{third.team}</div>
+              <div className="text-lg font-black text-[#fffbd4]/80 mb-2 drop-shadow-[0_1px_0_#0d0d0d]">{third.score} pts</div>
+              <div className="w-full bg-[#891c1c] border-2 border-[#0d0d0d] border-t-4 border-t-[#ef5368] rounded-t-2xl h-16 flex items-center justify-center shadow-[0_4px_0_#0d0d0d,inset_0_2px_0_rgba(239,83,104,0.2)]">
+                <span className="text-xl font-black text-[#fffbd4]">3</span>
               </div>
             </div>
           )}
@@ -98,9 +99,9 @@ export default function MatchPodiumModal({ gameState, onRematch, onReturnMenu }:
           <div className="px-6 pb-4">
             <div className="balatro-card rounded-xl p-3 max-h-28 overflow-y-auto space-y-1 text-xs">
               {standings.slice(3).map((st, i) => (
-                <div key={i} className="flex items-center justify-between text-[#9cf6ff] px-2 py-0.5 font-bold">
+                <div key={i} className="flex items-center justify-between text-[#fffbd4] px-2 py-0.5 font-bold">
                   <span>#{i + 4} {st.team}</span>
-                  <span className="font-black text-white">{st.score} pts</span>
+                  <span className="font-black text-[#fffbd4]">{st.score} pts</span>
                 </div>
               ))}
             </div>
@@ -108,22 +109,26 @@ export default function MatchPodiumModal({ gameState, onRematch, onReturnMenu }:
         )}
 
         {/* Action Buttons */}
-        <div className="p-4 bg-[#003c5a] border-t-2 border-[#0071b4] flex justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => { soundFx.playClick(); onReturnMenu(); }}
-            className="balatro-btn-dark px-6 py-2.5 rounded-xl text-[#9cf6ff] font-black text-xs uppercase tracking-wider cursor-pointer"
-          >
-            Main Menu
-          </button>
+        <div className="p-4 bg-[#0d0d0d] border-t-2 border-[#891c1c] flex justify-center gap-3">
+          {!isHost && (
+            <button
+              type="button"
+              onClick={() => { soundFx.playClick(); onReturnMenu(); }}
+              className="balatro-btn-dark px-6 py-2.5 rounded-xl text-[#fffbd4] font-black text-xs uppercase tracking-wider cursor-pointer"
+            >
+              Main Menu
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => { soundFx.playFanfare(); onRematch(); }}
-            className="balatro-btn-primary font-black px-8 py-2.5 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-[#003c5a]"
-          >
-            Rematch
-          </button>
+          {isHost && (
+            <button
+              type="button"
+              onClick={() => { soundFx.playFanfare(); onRematch(); }}
+              className="balatro-btn-purple font-black px-8 py-2.5 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-white"
+            >
+              Rematch
+            </button>
+          )}
         </div>
 
       </div>

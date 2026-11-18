@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { soundFx } from '../soundFx';
-import { Category, MatchConfig } from '../types';
+import { Category, MatchConfig, GameSettings } from '../types';
 
 interface MatchSetupProps {
   categories: Category[];
@@ -9,7 +9,25 @@ interface MatchSetupProps {
   onOpenTeams: () => void;
   initialMode?: 'single' | 'multi' | 'boss_rush';
   teams?: string[];
+  defaultSettings?: GameSettings;
   turnTimer?: number;
+  isOnlinePicker?: boolean;
+  isOnlineConfigure?: boolean;
+  initialRounds?: number;
+  initialCategoryIndices?: number[];
+  onSaveCategories?: (selection: {
+    matchMode: 'single' | 'multi' | 'boss_rush';
+    totalRounds: number;
+    categoryIndices: number[];
+  }) => void;
+  onSaveConfig?: (config: {
+    matchMode: 'single' | 'multi' | 'boss_rush';
+    totalRounds: number;
+    categoryIndices: number[];
+    settings: GameSettings;
+  }) => void;
+  onCancelCategories?: () => void;
+  onCancelConfig?: () => void;
 }
 
 export default function MatchSetup({
@@ -19,13 +37,40 @@ export default function MatchSetup({
   onOpenTeams,
   initialMode = 'single',
   teams = [],
-  turnTimer = 30
+  defaultSettings,
+  turnTimer = 30,
+  isOnlinePicker = false,
+  isOnlineConfigure = false,
+  initialRounds,
+  initialCategoryIndices,
+  onSaveCategories,
+  onSaveConfig,
+  onCancelCategories,
+  onCancelConfig
 }: MatchSetupProps): React.JSX.Element {
+  const isOnline = isOnlinePicker || isOnlineConfigure;
   const [matchMode, setMatchMode] = useState<'single' | 'multi' | 'boss_rush'>(initialMode);
-  const [totalRounds, setTotalRounds] = useState<number>(3);
+  const [totalRounds, setTotalRounds] = useState<number>(initialRounds ?? 3);
   const [bossRushDuration, setBossRushDuration] = useState<number>(300); // 300 (5m), 600 (10m), 900 (15m)
-  const [selectedIndices, setSelectedIndices] = useState<number[]>([0]);
+  const [selectedIndices, setSelectedIndices] = useState<number[]>(() => {
+    if (initialCategoryIndices && initialCategoryIndices.length > 0) {
+      return initialCategoryIndices;
+    }
+    return [0];
+  });
   const [showOneTeamModal, setShowOneTeamModal] = useState<boolean>(false);
+
+  // Match rules chosen pre-game
+  const [turnTimerSetting, setTurnTimerSetting] = useState<number>(defaultSettings?.turn_timer ?? turnTimer ?? 30);
+  const [endCondition, setEndCondition] = useState<'both' | 'turns' | 'points'>(defaultSettings?.end_condition ?? 'both');
+  const [pointThreshold, setPointThreshold] = useState<number>(defaultSettings?.point_threshold ?? (initialMode === 'boss_rush' ? 2000 : 500));
+  const [maxTurns, setMaxTurns] = useState<number>(defaultSettings?.max_turns ?? (defaultSettings?.end_condition === 'turns' ? 15 : 0));
+
+  useEffect(() => {
+    if (matchMode === 'boss_rush' && (!pointThreshold || pointThreshold < 1000)) {
+      setPointThreshold(2000);
+    }
+  }, [matchMode, pointThreshold]);
 
   const isLessThanTwoTeams = matchMode !== 'boss_rush' && teams.length < 2;
 
@@ -33,15 +78,18 @@ export default function MatchSetup({
   useEffect(() => {
     if (matchMode === 'single' || matchMode === 'boss_rush') {
       if (selectedIndices.length !== 1) {
-        setSelectedIndices([0]);
+        setSelectedIndices([selectedIndices[0] ?? 0]);
       }
     } else {
       const count = Math.min(totalRounds, categories.length);
-      const arr: number[] = [];
-      for (let i = 0; i < count; i++) {
-        arr.push(i % categories.length);
+      if (selectedIndices.length !== count) {
+        const arr: number[] = [...selectedIndices];
+        while (arr.length < count) {
+          const next = categories.find(c => !arr.includes(c.index))?.index ?? (arr.length % categories.length);
+          arr.push(next);
+        }
+        setSelectedIndices(arr.slice(0, count));
       }
-      setSelectedIndices(arr);
     }
   }, [matchMode, totalRounds, categories.length]);
 
@@ -83,7 +131,11 @@ export default function MatchSetup({
       match_mode: matchMode,
       total_rounds: matchMode === 'multi' ? totalRounds : 1,
       category_indices: selectedIndices,
-      boss_rush_duration: bossRushDuration
+      boss_rush_duration: bossRushDuration,
+      turn_timer: matchMode === 'boss_rush' ? 0 : turnTimerSetting,
+      point_threshold: pointThreshold,
+      max_turns: maxTurns,
+      end_condition: endCondition
     });
   };
 
@@ -94,107 +146,119 @@ export default function MatchSetup({
       <div className="w-full flex items-center justify-between mb-6">
         <button
           type="button"
-          onClick={() => { soundFx.playClick(); onBack(); }}
-          className="balatro-btn-dark font-black w-11 h-11 rounded-xl flex items-center justify-center text-2xl cursor-pointer transition active:translate-y-0.5 text-[#9cf6ff]"
+          onClick={() => {
+            soundFx.playClick();
+            if (isOnlineConfigure && onCancelConfig) {
+              onCancelConfig();
+            } else if (isOnlinePicker && onCancelCategories) {
+              onCancelCategories();
+            } else {
+              onBack();
+            }
+          }}
+          onMouseEnter={() => soundFx.playHover()}
+          className="balatro-btn-dark font-black w-11 h-11 rounded-xl flex items-center justify-center text-2xl cursor-pointer transition active:translate-y-0.5 text-[#fffbd4]"
           title="Back"
           aria-label="Back"
         >
           ←
         </button>
 
-        <h1 className="text-3xl font-black text-white tracking-wide uppercase text-center drop-shadow-[0_3px_0_#0c1079]">
-          Match Setup
+        <h1 className="text-3xl font-black text-[#fffbd4] tracking-wide uppercase text-center drop-shadow-[0_3px_0_#0d0d0d]">
+          {isOnlineConfigure ? 'Configure Online Match' : isOnlinePicker ? 'Pick Categories' : 'Match Setup'}
         </h1>
 
-        <button
-          onClick={() => { soundFx.playClick(); onOpenTeams(); }}
-          className={`font-black px-6 py-2.5 rounded-xl text-sm uppercase tracking-wider cursor-pointer flex items-center gap-1.5 transition-all ${
-            isLessThanTwoTeams
-              ? 'balatro-btn-teal ring-2 ring-[#62f6bd] text-[#003c5a] shadow-[0_0_15px_rgba(98,246,189,0.6)] animate-pulse'
-              : 'balatro-btn-cyan text-[#0c1079]'
-          }`}
-          title="Configure Teams"
-        >
-          <span>Teams</span>
-          <span className="font-black text-base">→</span>
-        </button>
+        {!isOnline ? (
+          <button
+            onClick={() => { soundFx.playClick(); onOpenTeams(); }}
+            onMouseEnter={() => soundFx.playHover()}
+            className={`font-black px-6 py-2.5 rounded-2xl text-sm md:text-base uppercase tracking-wider cursor-pointer flex items-center gap-1.5 transition-all ${
+              isLessThanTwoTeams
+                ? 'balatro-btn-red ring-2 ring-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] animate-pulse'
+                : 'balatro-btn-blue text-white shadow-md'
+            }`}
+            title="Configure Teams"
+          >
+            <span>Teams</span>
+            <span className="font-black text-base">→</span>
+          </button>
+        ) : (
+          <div className="w-11" />
+        )}
       </div>
 
-      {/* Match Mode Selection (Distinct Cohesive Multi-Tone Styles) */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+      {/* Match Mode Selection */}
+      <div className={`w-full grid gap-3 mb-5 ${isOnline ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
         <button
           type="button"
+          onMouseEnter={() => soundFx.playHover()}
           onClick={() => { soundFx.playClick(); setMatchMode('single'); }}
           className={`p-4 rounded-xl border-2 transition-all text-left flex flex-col justify-between cursor-pointer ${
             matchMode === 'single'
-              ? 'bg-[#003c5a] border-[#00b6de] shadow-[0_5px_0_#0c1079]'
-              : 'balatro-card opacity-85 hover:opacity-100 hover:border-[#00b6de]'
+              ? 'bg-[#0d0d0d] border-[#fffbd4] match-mode-card-selected'
+              : 'balatro-card opacity-85 hover:opacity-100 hover:border-[#ef5368]'
           }`}
         >
-          <div className="text-lg font-black text-white mb-1">
+          <div className="text-lg font-black text-[#fffbd4] mb-1">
             Single Round
           </div>
-          <p className="text-xs text-[#9cf6ff]/90 font-medium">
+          <p className="text-xs text-[#fffbd4]/90 font-medium">
             Standard head-to-head match on 1 category board.
           </p>
         </button>
 
         <button
           type="button"
+          onMouseEnter={() => soundFx.playHover()}
           onClick={() => { soundFx.playClick(); setMatchMode('multi'); }}
           className={`p-4 rounded-xl border-2 transition-all text-left flex flex-col justify-between cursor-pointer ${
             matchMode === 'multi'
-              ? 'bg-[#3120cd] border-[#62f6bd] shadow-[0_5px_0_#0c1079]'
-              : 'balatro-card opacity-85 hover:opacity-100 hover:border-[#62f6bd]'
+              ? 'bg-[#0d0d0d] border-[#fffbd4] match-mode-card-selected'
+              : 'balatro-card opacity-85 hover:opacity-100 hover:border-[#ef5368]'
           }`}
         >
-          <div className="text-lg font-black text-white mb-1">
+          <div className="text-lg font-black text-[#fffbd4] mb-1">
             Multi-Round
           </div>
-          <p className="text-xs text-[#6ad6cd]/90 font-medium">
+          <p className="text-xs text-[#fffbd4]/90 font-medium">
             2 to 5 categories in a cumulative championship match.
           </p>
         </button>
 
         <button
           type="button"
+          onMouseEnter={() => soundFx.playHover()}
           onClick={() => { soundFx.playClick(); setMatchMode('boss_rush'); }}
           className={`p-4 rounded-xl border-2 transition-all text-left flex flex-col justify-between cursor-pointer ${
             matchMode === 'boss_rush'
-              ? 'bg-[#4a089c] border-[#62f6bd] shadow-[0_5px_0_#0c1079]'
-              : 'balatro-card opacity-85 hover:opacity-100 hover:border-[#4a34de]'
+              ? 'bg-[#0d0d0d] border-[#fffbd4] match-mode-card-selected'
+              : 'balatro-card opacity-85 hover:opacity-100 hover:border-[#ef5368]'
           }`}
         >
-          <div className="text-lg font-black text-[#62f6bd] mb-1">
-            Boss Rush (Solo)
+          <div className="text-lg font-black text-[#ef5368] mb-1">
+            Boss Rush
           </div>
-          <p className="text-xs text-[#9cf6ff]/90 font-medium">
-            1 team solo run against a 5, 10, or 15 minute timer!
+          <p className="text-xs text-[#fffbd4]/90 font-medium">
+            {isOnline ? 'Co-op squad run against a 5, 10, or 15 minute timer!' : '1 team solo run against a 5, 10, or 15 minute timer!'}
           </p>
         </button>
       </div>
 
       {/* Multi-Round Settings Banner */}
       {matchMode === 'multi' && (
-        <div className="w-full bg-[#3120cd] border-2 border-[#787bd1] border-b-4 border-b-[#0c1079] rounded-xl p-4 mb-5 text-center animate-in fade-in shadow-[0_4px_0_#0c1079]">
-          <div className="text-xs font-black tracking-widest text-[#62f6bd] uppercase mb-1">
-            Tournament Rule
-          </div>
-          <div className="text-lg font-black text-white tracking-wide mb-3">
-            Points are cumulative across rounds
-          </div>
-
+        <div className="w-full bg-[#0d0d0d] border-2 border-[#891c1c] border-b-4 border-b-[#891c1c] rounded-xl p-4 mb-5 text-center animate-in fade-in shadow-[0_4px_0_#0a0f23]">
           <div className="flex items-center justify-center gap-3">
-            <span className="text-sm font-black text-[#9cf6ff] uppercase mr-1">Rounds:</span>
+            <span className="text-sm font-black text-[#fffbd4] uppercase mr-1">Rounds:</span>
             {[2, 3, 4, 5].map((num) => (
               <button
                 key={num}
                 type="button"
+                onMouseEnter={() => soundFx.playHover()}
                 onClick={() => { soundFx.playClick(); setTotalRounds(num); }}
-                className={`px-6 py-2.5 min-w-[58px] rounded-xl font-black text-base cursor-pointer transition uppercase ${
+                className={`px-6 py-2.5 min-w-[58px] rounded-2xl font-black text-base cursor-pointer transition uppercase ${
                   totalRounds === num
-                    ? 'balatro-btn-teal text-[#003c5a] shadow-md'
-                    : 'balatro-btn-dark text-[#9cf6ff]'
+                    ? 'balatro-btn-blue text-white shadow-md'
+                    : 'balatro-btn-dark text-[#fffbd4]'
                 }`}
               >
                 {num}
@@ -206,11 +270,11 @@ export default function MatchSetup({
 
       {/* Boss Rush Settings Banner */}
       {matchMode === 'boss_rush' && (
-        <div className="w-full bg-[#4a089c] border-2 border-[#787bd1] border-b-4 border-b-[#0c1079] rounded-xl p-4 mb-5 text-center animate-in fade-in shadow-[0_4px_0_#0c1079]">
-          <div className="text-xs font-black tracking-widest text-[#62f6bd] uppercase mb-1">
+        <div className="w-full bg-[#0d0d0d] border-2 border-slate-700 border-b-4 border-b-slate-700 rounded-xl p-4 mb-5 text-center animate-in fade-in shadow-[0_4px_0_#0a0f23]">
+          <div className="text-xs font-black tracking-widest text-sky-400 uppercase mb-1">
             Boss Rush Solo Challenge
           </div>
-          <div className="text-base font-black text-white tracking-wide mb-3">
+          <div className="text-base font-black text-[#fffbd4] tracking-wide mb-3">
             Choose Your Countdown Timer:
           </div>
 
@@ -223,11 +287,44 @@ export default function MatchSetup({
               <button
                 key={secs}
                 type="button"
+                onMouseEnter={() => soundFx.playHover()}
                 onClick={() => { soundFx.playClick(); setBossRushDuration(secs); }}
-                className={`px-5 py-2.5 rounded-xl font-black text-sm cursor-pointer transition uppercase ${
+                className={`px-5 py-2.5 rounded-2xl font-black text-sm cursor-pointer transition uppercase ${
                   bossRushDuration === secs
-                    ? 'balatro-btn-teal text-[#003c5a] shadow-md'
-                    : 'balatro-btn-dark text-[#9cf6ff]'
+                    ? 'balatro-btn-blue text-white shadow-md'
+                    : 'balatro-btn-dark text-[#fffbd4]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="text-base font-black text-[#fffbd4] tracking-wide mt-4 mb-3">
+            Target Score Goal:
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            {[
+              { label: '1,000 pts', val: 1000 },
+              { label: '1,500 pts', val: 1500 },
+              { label: '2,000 pts', val: 2000 },
+              { label: '3,000 pts', val: 3000 },
+              { label: '4,000 pts', val: 4000 },
+              { label: '5,000 pts', val: 5000 }
+            ].map(({ label, val }) => (
+              <button
+                key={val}
+                type="button"
+                onMouseEnter={() => soundFx.playHover()}
+                onClick={() => {
+                  soundFx.playClick();
+                  setPointThreshold(val);
+                }}
+                className={`px-3.5 py-2 rounded-2xl font-black text-xs sm:text-sm cursor-pointer transition uppercase ${
+                  (pointThreshold || 2000) === val
+                    ? 'balatro-btn-blue text-white shadow-md'
+                    : 'balatro-btn-dark text-[#fffbd4]'
                 }`}
               >
                 {label}
@@ -240,18 +337,19 @@ export default function MatchSetup({
       {/* Category Selection Header */}
       <div className="w-full flex items-center justify-between mb-3 px-1">
         <div>
-          <h2 className="text-sm font-black text-white tracking-wider uppercase drop-shadow-[0_1px_0_#0c1079]">
+          <h2 className="text-sm font-black text-[#fffbd4] tracking-wider uppercase drop-shadow-[0_1px_0_#0d0d0d]">
             Select {matchMode === 'single' ? 'Category' : `Categories (${selectedIndices.length} / ${totalRounds})`}
           </h2>
-          <p className="text-xs text-[#6ad6cd]/80 font-semibold">
+          <p className="text-xs text-[#fffbd4]/70 font-semibold">
             {matchMode === 'single' ? 'Pick a category to begin' : 'Choose in order of play'}
           </p>
         </div>
 
         <button
           type="button"
+          onMouseEnter={() => soundFx.playHover()}
           onClick={handleRandomize}
-          className="balatro-btn-dark px-3.5 py-1.5 rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer"
+          className="balatro-btn-dark px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer text-[#fffbd4]"
         >
           Random Selection
         </button>
@@ -266,27 +364,35 @@ export default function MatchSetup({
           return (
             <div
               key={cat.index}
+              onMouseEnter={() => soundFx.playHover()}
               onClick={() => toggleCategory(cat.index)}
-              className={`p-4 rounded-xl border-2 border-b-4 cursor-pointer transition-all flex flex-col justify-between ${
+              className={`relative rounded-xl cursor-pointer transition-all flex flex-col justify-between select-none min-h-[132px] px-4 pt-3.5 pb-5 ${
                 isSelected
-                  ? 'bg-[#003c5a] border-[#62f6bd] border-b-[#087d6a] shadow-[0_4px_0_#0c1079,inset_0_1.5px_0_rgba(98,246,189,0.3)]'
-                  : 'balatro-card hover:border-[#00b6de]'
+                  ? 'bg-[#0d0d0d] border-2 border-[#fffbd4] cat-card-selected'
+                  : 'cat-card-unselected'
               }`}
             >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <span className="font-black text-sm text-white line-clamp-2 leading-tight">
+              {/* Absolute Badge: positioned top-3 right-3, never squeezes text */}
+              {isSelected && (
+                <span className="cat-selected-badge absolute top-3 right-3 w-6 h-6 rounded-full font-black text-xs flex items-center justify-center shrink-0 z-10 pointer-events-none">
+                  {matchMode === 'multi' ? orderIndex + 1 : '✓'}
+                </span>
+              )}
+
+              {/* Title Section with reserved right padding for badge */}
+              <div className="mb-2 pr-7 min-w-0">
+                <span className={`font-black text-sm leading-snug break-words block ${isSelected ? 'text-[#fffbd4]' : 'text-[#fffbd4]/80'}`}>
                   {cat.title}
                 </span>
-                {isSelected && (
-                  <span className="w-6 h-6 rounded-full bg-[#62f6bd] text-[#003c5a] font-black text-xs flex items-center justify-center shrink-0 shadow-[0_2px_0_#0c1079]">
-                    {matchMode === 'multi' ? orderIndex + 1 : '✓'}
-                  </span>
-                )}
               </div>
-              <div className="flex items-center justify-between text-[11px] font-bold">
-                <span className="text-[#6ad6cd]/80">{cat.count} Items</span>
-                <span className={isSelected ? 'text-[#62f6bd]' : 'text-[#787bd1]'}>
-                  {isSelected ? (matchMode === 'multi' ? `Round ${orderIndex + 1}` : 'Selected') : 'Select'}
+
+              {/* Footer row with dedicated bottom clearance */}
+              <div className="flex items-center justify-between mt-auto pt-2 pb-0">
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${isSelected ? 'cat-count-badge-selected' : 'bg-[#0d0d0d] text-[#fffbd4]/60'}`}>
+                  {cat.count} Items
+                </span>
+                <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'cat-status-selected' : 'text-[#fffbd4]/50'}`}>
+                  {isSelected ? (matchMode === 'multi' ? `Round ${orderIndex + 1}` : 'Selected') : 'Pick'}
                 </span>
               </div>
             </div>
@@ -294,31 +400,233 @@ export default function MatchSetup({
         })}
       </div>
 
-      {/* Start Button */}
+      {/* Match Rules & Timers (Configured Pre-Game) */}
+      {matchMode !== 'boss_rush' && !isOnlinePicker && (
+        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 md:p-5 mb-6 shadow-[0_6px_0_#0d0d0d]">
+          <div className="mb-4 border-b border-[#891c1c]/40 pb-3">
+            <h2 className="text-sm md:text-base font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_1px_0_#0d0d0d]">
+              Match Rules & Conditions
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* End Condition Mode */}
+            <div>
+              <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-2">
+                End Condition
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { val: 'both', label: 'Turns + Pts' },
+                  { val: 'turns', label: 'Turns Only' },
+                  { val: 'points', label: 'Points Only' }
+                ].map(({ val, label }) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onMouseEnter={() => soundFx.playHover()}
+                    onClick={() => {
+                      soundFx.playSettingsChange();
+                      setEndCondition(val as any);
+                    }}
+                    className={`py-2 px-1 rounded-xl font-black text-xs uppercase tracking-wide cursor-pointer transition ${
+                      endCondition === val
+                        ? 'balatro-btn-blue text-white shadow-md'
+                        : 'balatro-btn-dark text-[#fffbd4]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Turn Timer */}
+            <div>
+              <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-2">
+                Turn Timer
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { val: 0, label: 'Off' },
+                  { val: 30, label: '30s' },
+                  { val: 60, label: '60s' },
+                  { val: 90, label: '90s' }
+                ].map(({ val, label }) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onMouseEnter={() => soundFx.playHover()}
+                    onClick={() => {
+                      soundFx.playSettingsChange();
+                      setTurnTimerSetting(val);
+                    }}
+                    className={`py-2 px-1 rounded-xl font-black text-xs uppercase tracking-wide cursor-pointer transition ${
+                      turnTimerSetting === val
+                        ? 'balatro-btn-blue text-white shadow-md'
+                        : 'balatro-btn-dark text-[#fffbd4]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Winning Point Threshold */}
+            <div className={endCondition === 'turns' ? 'opacity-35 pointer-events-none' : ''}>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4]">
+                  Winning Point Target
+                </label>
+                {endCondition === 'turns' && (
+                  <span className="text-[10px] font-bold text-rose-400">(Disabled)</span>
+                )}
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                {[250, 500, 750, 1000, 1500, 2500].map((pts) => (
+                  <button
+                    key={pts}
+                    type="button"
+                    onMouseEnter={() => soundFx.playHover()}
+                    onClick={() => {
+                      soundFx.playSettingsChange();
+                      setPointThreshold(pts);
+                    }}
+                    className={`py-2 rounded-xl font-black text-xs uppercase tracking-wider text-center cursor-pointer transition ${
+                      pointThreshold === pts
+                        ? 'balatro-btn-blue text-white shadow-md'
+                        : 'balatro-btn-dark text-[#fffbd4]'
+                    }`}
+                  >
+                    {pts}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Max Turns per Team */}
+            <div className={endCondition === 'points' ? 'opacity-35 pointer-events-none' : ''}>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4]">
+                  Max Turns Per Team
+                </label>
+                {endCondition === 'points' && (
+                  <span className="text-[10px] font-bold text-rose-400">(Unlimited)</span>
+                )}
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { val: 0, label: 'Unlimited', disabled: endCondition === 'turns' },
+                  { val: 10, label: '10' },
+                  { val: 15, label: '15' },
+                  { val: 20, label: '20' }
+                ].map(({ val, label, disabled }) => (
+                  <button
+                    key={val}
+                    type="button"
+                    disabled={disabled}
+                    onMouseEnter={() => { if (!disabled) soundFx.playHover(); }}
+                    onClick={() => {
+                      soundFx.playSettingsChange();
+                      setMaxTurns(val);
+                    }}
+                    className={`py-2 rounded-xl font-black text-xs uppercase tracking-wide cursor-pointer transition ${
+                      disabled
+                        ? 'opacity-30 cursor-not-allowed balatro-btn-dark text-slate-500'
+                        : maxTurns === val
+                        ? 'balatro-btn-blue text-white shadow-md'
+                        : 'balatro-btn-dark text-[#fffbd4]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Start / Save Actions */}
       <div className="w-full flex justify-center pb-6">
-        <button
-          type="button"
-          onClick={handleStart}
-          className="font-black text-lg px-12 py-3.5 rounded-xl tracking-wide uppercase transition shadow-xl balatro-btn-teal text-[#003c5a] cursor-pointer hover:scale-102 active:scale-98"
-        >
-          {matchMode === 'boss_rush'
-            ? `Start Boss Rush (${bossRushDuration / 60}m)`
-            : matchMode === 'single'
-            ? 'Start Game'
-            : `Start ${totalRounds}-Round Match`}
-        </button>
+        {isOnline ? (
+          <div className="flex items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playClick();
+                if (onCancelConfig) {
+                  onCancelConfig();
+                } else if (onCancelCategories) {
+                  onCancelCategories();
+                } else {
+                  onBack();
+                }
+              }}
+              onMouseEnter={() => soundFx.playHover()}
+              className="balatro-btn-dark px-8 py-3.5 rounded-2xl font-black text-base uppercase tracking-wider cursor-pointer text-[#fffbd4] transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playCorrect();
+                if (onSaveConfig) {
+                  onSaveConfig({
+                    matchMode,
+                    totalRounds: matchMode === 'multi' ? totalRounds : 1,
+                    categoryIndices: selectedIndices,
+                    settings: {
+                      match_mode: matchMode,
+                      boss_rush_duration: bossRushDuration,
+                      turn_timer: turnTimerSetting,
+                      point_threshold: pointThreshold,
+                      max_turns: maxTurns,
+                      end_condition: endCondition
+                    }
+                  });
+                } else if (onSaveCategories) {
+                  onSaveCategories({
+                    matchMode,
+                    totalRounds: matchMode === 'multi' ? totalRounds : 1,
+                    categoryIndices: selectedIndices
+                  });
+                }
+              }}
+              onMouseEnter={() => soundFx.playHover()}
+              className="balatro-btn-purple px-10 py-3.5 rounded-2xl font-black text-base uppercase tracking-wider cursor-pointer text-white shadow-xl transition"
+            >
+              Save Settings
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleStart}
+            onMouseEnter={() => soundFx.playHover()}
+            className="font-black text-xl md:text-2xl px-12 py-4 rounded-2xl tracking-wider uppercase transition shadow-xl balatro-btn-purple text-white cursor-pointer"
+          >
+            {matchMode === 'boss_rush'
+              ? `Start Boss Rush (${bossRushDuration / 60}m)`
+              : matchMode === 'single'
+              ? 'Start Game'
+              : `Start ${totalRounds}-Round Match`}
+          </button>
+        )}
       </div>
 
       {/* 2+ Teams Required Pop-up Modal */}
       {showOneTeamModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="balatro-modal p-6 md:p-8 rounded-3xl max-w-md w-full text-center animate-in zoom-in-95 border-[#787bd1] shadow-2xl">
+          <div className="balatro-modal p-6 md:p-8 rounded-3xl max-w-md w-full text-center animate-in zoom-in-95 border-slate-700 shadow-2xl">
             <div className="text-3xl mb-2">⚠️</div>
-            <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">
+            <h3 className="text-xl font-black text-rose-400 uppercase tracking-wider mb-2">
               2+ Teams Required
             </h3>
-            <p className="text-sm text-[#9cf6ff]/90 font-semibold mb-6 leading-relaxed">
-              Standard and multi-round matches require at least 2 teams. Please add another team in <strong className="text-white">Teams</strong>, or switch to <strong className="text-[#62f6bd]">Boss Rush (Solo)</strong>.
+            <p className="text-sm text-[#fffbd4]/90 font-semibold mb-6 leading-relaxed">
+              Standard and multi-round matches require at least 2 teams. Please add another team in <strong className="text-[#fffbd4]">Teams</strong>, or switch to <strong className="text-sky-400">Boss Rush</strong>.
             </p>
             <div className="flex items-center justify-center gap-3">
               <button
@@ -327,7 +635,7 @@ export default function MatchSetup({
                   soundFx.playClick();
                   setShowOneTeamModal(false);
                 }}
-                className="balatro-btn-dark px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#9cf6ff]"
+                className="balatro-btn-dark px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#fffbd4]"
               >
                 Cancel
               </button>
@@ -338,7 +646,7 @@ export default function MatchSetup({
                   setShowOneTeamModal(false);
                   onOpenTeams();
                 }}
-                className="balatro-btn-cyan px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#0c1079] flex items-center gap-2 shadow-lg hover:scale-105 transition"
+                className="balatro-btn-blue px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-white flex items-center gap-2 shadow-lg hover:scale-105 transition"
               >
                 Go to Teams →
               </button>

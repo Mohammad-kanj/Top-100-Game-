@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: top100-arcade
+    runtime: docker
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8000

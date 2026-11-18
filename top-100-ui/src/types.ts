@@ -8,6 +8,9 @@ export interface GameSettings {
   boss_rush_duration?: number;
   sfx_enabled?: boolean;
   sfx_volume?: number;
+  reduce_motion?: boolean;
+  brightness?: number;
+  color_theme?: 'red' | 'blue';
   scoring_mode?: string;
   max_strikes?: number;
 }
@@ -48,6 +51,9 @@ export interface LastGuess {
   text: string;
   status: 'none' | 'correct' | 'incorrect' | 'exists';
   message: string;
+  points?: number;
+  rank?: number;
+  resolvedName?: string;
 }
 
 export interface FocusedTile {
@@ -70,6 +76,9 @@ export interface MatchConfig {
   teams?: string[];
   boss_rush_duration?: number;
   point_threshold?: number;
+  turn_timer?: number;
+  max_turns?: number;
+  end_condition?: 'both' | 'turns' | 'points';
 }
 
 export interface HostOverrideData {
@@ -77,4 +86,26 @@ export interface HostOverrideData {
   index?: number;
   team_index?: number;
   delta?: number;
+}
+
+export interface OnlinePlayerInfo {
+  player_id: string;
+  name: string;
+  is_host: boolean;
+  is_connected: boolean;
+  consecutive_incorrect: number;
+  eligible_for_surrender: boolean;
+}
+
+export interface OnlineRoomInfo {
+  room_code: string;
+  host_id: string;
+  status: 'LOBBY' | 'PLAYING' | string;
+  is_configured?: boolean;
+  category_indices?: number[];
+  selected_categories?: string[];
+  players?: OnlinePlayerInfo[];
+  active_player_id?: string | null;
+  surrender_vote?: any;
+  game_state?: any;
 }

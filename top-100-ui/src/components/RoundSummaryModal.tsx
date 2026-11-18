@@ -4,7 +4,9 @@ import { GameState } from '../types';
 
 interface RoundSummaryModalProps {
   gameState: GameState;
+  isHost?: boolean;
   onNextRound: () => void;
+  onPlayAgain?: () => void;
   onViewPodium: () => void;
   onInspectBoard: () => void;
   onReturnMenu: () => void;
@@ -19,7 +21,9 @@ interface Top10Item {
 
 export default function RoundSummaryModal({
   gameState,
+  isHost = true,
   onNextRound,
+  onPlayAgain,
   onViewPodium,
   onInspectBoard,
   onReturnMenu
@@ -66,33 +70,33 @@ export default function RoundSummaryModal({
       <div className="balatro-modal rounded-3xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh]">
         
         {/* Header */}
-        <div className="bg-[#003c5a] border-b-2 border-[#0071b4] p-6 text-center">
-          <div className="text-xs font-black text-[#9cf6ff] uppercase tracking-widest mb-1">
+        <div className="bg-[#0d0d0d] border-b-2 border-[#891c1c] p-6 text-center">
+          <div className="text-xs font-black text-[#ef5368] uppercase tracking-widest mb-1">
             {isBossRush
               ? 'Boss Rush Run Complete'
               : isMulti
               ? `Round ${currentMatchRound} of ${totalRounds} Complete`
               : 'Game Complete'}
           </div>
-          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase drop-shadow-[0_2px_0_#0c1079]">
+          <h2 className="text-3xl md:text-4xl font-black text-[#fffbd4] tracking-tight uppercase drop-shadow-[0_2px_0_#0d0d0d]">
             {isBossRush ? `Solo Run: ${roundScores[0] || 0} Pts` : displayWinner}
           </h2>
-          <div className="text-xs font-bold text-[#6ad6cd] mt-1">
+          <div className="text-xs font-bold text-[#fffbd4]/80 mt-1">
             Category: {gameState.current_round_title}
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-5 text-[#9cf6ff]">
+        <div className="p-6 overflow-y-auto space-y-5 text-[#fffbd4]">
 
           {/* Cumulative Leaderboard */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <span className="text-xs font-black tracking-wider uppercase text-[#9cf6ff]">
+              <span className="text-xs font-black tracking-wider uppercase text-[#fffbd4]">
                 {isMulti ? 'Tournament Leaderboard (Cumulative)' : 'Round Final Scores'}
               </span>
               {isMulti && (
-                <span className="text-[11px] font-black text-[#003c5a] bg-[#62f6bd] px-2.5 py-0.5 rounded-lg border-2 border-[#087d6a] border-b-4 shadow-[0_2px_0_#0c1079]">
+                <span className="text-[11px] font-black text-[#0d0d0d] bg-[#fffbd4] px-2.5 py-0.5 rounded-lg border-2 border-[#891c1c] border-b-4 shadow-[0_2px_0_#0d0d0d]">
                   Points Accumulate Across Rounds
                 </span>
               )}
@@ -106,24 +110,24 @@ export default function RoundSummaryModal({
                     key={idx}
                     className={`p-4 rounded-xl border-2 border-b-4 flex items-center justify-between ${
                       isWinner
-                        ? 'bg-[#3120cd] border-[#62f6bd] border-b-[#0c1079] shadow-[0_4px_0_#0c1079,inset_0_1.5px_0_rgba(98,246,189,0.3)]'
+                        ? 'bg-[#0d0d0d] border-[#fffbd4] border-b-[#891c1c] shadow-[0_4px_0_#0d0d0d,inset_0_1.5px_0_rgba(255,251,212,0.3)]'
                         : 'balatro-card'
                     }`}
                   >
                     <div>
-                      <div className="font-black text-sm text-white">
+                      <div className="font-black text-sm text-[#fffbd4]">
                         {team}
                       </div>
-                      <div className="text-xs text-[#6ad6cd] font-semibold">
-                        Round Points: <strong className="text-white">+{roundScores[idx] || 0}</strong>
+                      <div className="text-xs text-[#fffbd4]/70 font-semibold">
+                        Round Points: <strong className="text-[#fffbd4]">+{roundScores[idx] || 0}</strong>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <div className={`text-2xl font-black drop-shadow-[0_1px_0_#0c1079] ${isWinner ? 'text-[#62f6bd]' : 'text-[#9cf6ff]'}`}>
+                      <div className={`text-2xl font-black drop-shadow-[0_1px_0_#0d0d0d] ${isWinner ? 'text-[#fffbd4]' : 'text-[#fffbd4]/80'}`}>
                         {isMulti ? matchScores[idx] || 0 : roundScores[idx] || 0}
                       </div>
-                      <div className="text-[10px] font-mono font-bold text-[#00b6de] uppercase">
+                      <div className="text-[10px] font-mono font-bold text-[#ef5368] uppercase">
                         {isMulti ? 'Total' : 'Points'}
                       </div>
                     </div>
@@ -135,7 +139,7 @@ export default function RoundSummaryModal({
 
           {/* Top 10 Answer Highlights */}
           <div className="p-4 rounded-2xl balatro-card">
-            <h3 className="text-xs font-black tracking-wider uppercase text-[#9cf6ff] mb-3 drop-shadow-[0_1px_0_#0c1079]">
+            <h3 className="text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-3 drop-shadow-[0_1px_0_#0d0d0d]">
               Top 10 Items Breakdown
             </h3>
 
@@ -145,15 +149,15 @@ export default function RoundSummaryModal({
                   key={item.rank}
                   className={`p-2.5 rounded-xl border-2 border-b-3 flex items-center justify-between gap-2 ${
                     item.revealed
-                      ? 'bg-[#003c5a] border-[#62f6bd] border-b-[#0c1079] text-[#62f6bd] shadow-[0_2px_0_#0c1079]'
-                      : 'bg-[#4a089c] border-[#787bd1]/50 border-b-[#0c1079] text-slate-300 shadow-[0_2px_0_#0c1079]'
+                      ? 'bg-[#0d0d0d] border-[#fffbd4] border-b-[#891c1c] text-[#fffbd4] shadow-[0_2px_0_#0d0d0d]'
+                      : 'bg-[#0a0f23] border-[#891c1c]/50 border-b-[#0d0d0d] text-[#fffbd4]/50 shadow-[0_2px_0_#0d0d0d]'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <span className="font-mono font-black shrink-0 text-[#00b6de]">#{item.rank}</span>
+                    <span className="font-mono font-black shrink-0 text-[#ef5368]">#{item.rank}</span>
                     <span className="truncate" title={item.name}>{item.name}</span>
                   </div>
-                  <span className={`font-mono text-[10px] uppercase shrink-0 font-bold ${item.revealed ? 'text-[#62f6bd]' : 'text-[#787bd1]'}`}>
+                  <span className={`font-mono text-[10px] uppercase shrink-0 font-bold ${item.revealed ? 'text-[#fffbd4]' : 'text-[#891c1c]'}`}>
                     {item.revealed ? item.team || 'Found' : 'Missed'}
                   </span>
                 </div>
@@ -164,48 +168,66 @@ export default function RoundSummaryModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="p-4 bg-[#003c5a] border-t-2 border-[#0071b4] flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 bg-[#0d0d0d] border-t-2 border-[#891c1c] flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => { soundFx.playClick(); onInspectBoard(); }}
-            className="balatro-btn-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#9cf6ff]"
+            className="balatro-btn-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#fffbd4]"
           >
             Inspect Board
           </button>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => { soundFx.playClick(); onReturnMenu(); }}
-              className="balatro-btn-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#9cf6ff]"
-            >
-              Main Menu
-            </button>
+            {!isHost && (
+              <button
+                type="button"
+                onClick={() => { soundFx.playClick(); onReturnMenu(); }}
+                className="balatro-btn-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#fffbd4]"
+              >
+                Main Menu
+              </button>
+            )}
 
-            {isFinalRound ? (
-              <button
-                type="button"
-                onClick={() => { soundFx.playFanfare(); onViewPodium(); }}
-                className="balatro-btn-primary font-black px-6 py-2 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-[#003c5a]"
-              >
-                Match Podium
-              </button>
-            ) : isMulti && currentMatchRound < totalRounds ? (
-              <button
-                type="button"
-                onClick={() => { soundFx.playCorrect(); onNextRound(); }}
-                className="balatro-btn-blue font-black px-6 py-2 rounded-xl tracking-wider uppercase text-xs cursor-pointer text-white"
-              >
-                Round {currentMatchRound + 1}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => { soundFx.playCorrect(); onNextRound(); }}
-                className="balatro-btn-primary font-black px-6 py-2 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-[#003c5a]"
-              >
-                Play Again
-              </button>
+            {isHost && (
+              isFinalRound ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playCorrect();
+                    if (onPlayAgain) {
+                      onPlayAgain();
+                    } else {
+                      onNextRound();
+                    }
+                  }}
+                  className="balatro-btn-purple font-black px-6 py-2 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-white"
+                >
+                  Play Again
+                </button>
+              ) : isMulti && currentMatchRound < totalRounds ? (
+                <button
+                  type="button"
+                  onClick={() => { soundFx.playCorrect(); onNextRound(); }}
+                  className="balatro-btn-blue font-black px-6 py-2 rounded-xl tracking-wider uppercase text-xs cursor-pointer text-white shadow-md"
+                >
+                  Round {currentMatchRound + 1}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playCorrect();
+                    if (onPlayAgain) {
+                      onPlayAgain();
+                    } else {
+                      onNextRound();
+                    }
+                  }}
+                  className="balatro-btn-purple font-black px-6 py-2 rounded-xl tracking-wider uppercase text-xs cursor-pointer shadow-md text-white"
+                >
+                  Play Again
+                </button>
+              )
             )}
           </div>
         </div>
