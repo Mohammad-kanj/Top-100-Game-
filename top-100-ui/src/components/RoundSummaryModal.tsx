@@ -10,6 +10,7 @@ interface RoundSummaryModalProps {
   onViewPodium: () => void;
   onInspectBoard: () => void;
   onReturnMenu: () => void;
+  onSelectCategories?: () => void;
 }
 
 interface Top10Item {
@@ -26,7 +27,8 @@ export default function RoundSummaryModal({
   onPlayAgain,
   onViewPodium,
   onInspectBoard,
-  onReturnMenu
+  onReturnMenu,
+  onSelectCategories
 }: RoundSummaryModalProps): React.JSX.Element {
   const teams = gameState.teams || [];
   const roundScores = gameState.scores || [];
@@ -169,13 +171,24 @@ export default function RoundSummaryModal({
 
         {/* Action Buttons */}
         <div className="p-4 bg-[#0d0d0d] border-t-2 border-[#891c1c] flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => { soundFx.playClick(); onInspectBoard(); }}
-            className="balatro-btn-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#fffbd4]"
-          >
-            Inspect Board
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => { soundFx.playClick(); onInspectBoard(); }}
+              className="balatro-btn-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-[#fffbd4]"
+            >
+              Inspect Board
+            </button>
+            {onSelectCategories && (
+              <button
+                type="button"
+                onClick={() => { soundFx.playClick(); onSelectCategories(); }}
+                className="balatro-btn-dark border border-amber-500/50 hover:border-amber-400 text-amber-300 hover:text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer shadow-sm"
+              >
+                Categories
+              </button>
+            )}
+          </div>
 
           <div className="flex items-center gap-3">
             {!isHost && (

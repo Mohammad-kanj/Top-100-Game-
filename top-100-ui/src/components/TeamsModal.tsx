@@ -5,9 +5,10 @@ interface TeamsModalProps {
   teams: string[];
   onSave: (teams: string[]) => void;
   onClose: () => void;
+  onStartGame?: () => void;
 }
 
-export default function TeamsModal({ teams, onSave, onClose }: TeamsModalProps): React.JSX.Element {
+export default function TeamsModal({ teams, onSave, onClose, onStartGame }: TeamsModalProps): React.JSX.Element {
   const [localTeams, setLocalTeams] = useState<string[]>([...teams]);
 
   const addTeam = (): void => {
@@ -30,11 +31,16 @@ export default function TeamsModal({ teams, onSave, onClose }: TeamsModalProps):
     setLocalTeams(updated);
   };
 
-  const handleSave = (): void => {
-    soundFx.playCorrect();
+  const handleSave = async (): Promise<void> => {
     const cleaned = localTeams.map((t, idx) => t.trim() || `Team ${idx + 1}`);
-    onSave(cleaned);
-    onClose();
+    await onSave(cleaned);
+    if (onStartGame) {
+      soundFx.playFanfare();
+      onStartGame();
+    } else {
+      soundFx.playCorrect();
+      onClose();
+    }
   };
 
   return (
@@ -44,7 +50,7 @@ export default function TeamsModal({ teams, onSave, onClose }: TeamsModalProps):
         {/* Header */}
         <div className="bg-[#0d0d0d] border-b-2 border-[#891c1c] p-5 flex items-center justify-between">
           <h2 className="text-xl font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_2px_0_#0d0d0d]">
-            Team Setup
+            {onStartGame ? 'Step 2: Configure Teams' : 'Team Setup'}
           </h2>
           <button 
             onClick={() => { soundFx.playClick(); onClose(); }}
@@ -107,14 +113,14 @@ export default function TeamsModal({ teams, onSave, onClose }: TeamsModalProps):
             onMouseEnter={() => soundFx.playHover()}
             className="balatro-btn-dark px-6 py-3 rounded-2xl text-[#fffbd4] font-black transition text-sm md:text-base uppercase tracking-wider cursor-pointer"
           >
-            Cancel
+            {onStartGame ? '← Categories' : 'Cancel'}
           </button>
           <button
             onClick={handleSave}
             onMouseEnter={() => soundFx.playHover()}
-            className="balatro-btn-purple font-black px-8 py-3 rounded-2xl transition tracking-wider text-sm md:text-base uppercase cursor-pointer text-white shadow-md"
+            className="balatro-btn-amber font-black px-8 py-3 rounded-2xl transition tracking-wider text-sm md:text-base uppercase cursor-pointer text-amber-950 shadow-md"
           >
-            Save Teams
+            {onStartGame ? 'Start Game →' : 'Save Teams'}
           </button>
         </div>
 

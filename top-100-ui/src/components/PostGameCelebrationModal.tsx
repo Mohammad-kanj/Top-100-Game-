@@ -10,6 +10,7 @@ interface PostGameCelebrationModalProps {
   onPlayAgain: () => void;
   onReturnMenu: () => void;
   onReturnToLobby?: () => void;
+  onSelectCategories?: () => void;
 }
 
 interface CorrectGuess {
@@ -33,7 +34,8 @@ export default function PostGameCelebrationModal({
   onNextRound,
   onPlayAgain,
   onReturnMenu,
-  onReturnToLobby
+  onReturnToLobby,
+  onSelectCategories
 }: PostGameCelebrationModalProps): React.JSX.Element {
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -502,6 +504,19 @@ export default function PostGameCelebrationModal({
           >
             Inspect Board
           </button>
+
+          {onSelectCategories && (
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playClick();
+                onSelectCategories();
+              }}
+              className="balatro-btn-dark border border-amber-500/50 hover:border-amber-400 text-amber-300 hover:text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer whitespace-nowrap shrink-0 shadow-sm"
+            >
+              Categories
+            </button>
+          )}
 
           {onReturnToLobby && (
             <button

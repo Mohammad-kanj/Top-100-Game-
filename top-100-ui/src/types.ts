@@ -28,6 +28,7 @@ export interface GameState {
   revealed_indices: number[];
   revealed_by: Record<string, string>;
   current_round_title: string;
+  current_round_subtitle?: string;
   current_round_answers: string[];
   is_round_over: boolean;
   is_match_over: boolean;
@@ -44,6 +45,7 @@ export interface GameState {
 export interface Category {
   index: number;
   title: string;
+  subtitle?: string;
   count: number;
 }
 

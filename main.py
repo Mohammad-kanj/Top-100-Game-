@@ -52,15 +52,119 @@ ROMAN_NUMERALS = {
 }
 
 ABBREVIATIONS = {
+    # Gaming
     "gta": "grand theft auto",
     "cod": "call of duty",
     "botw": "breath of the wild",
     "totk": "tears of the kingdom",
     "csgo": "counter strike global offensive",
     "cs:go": "counter strike global offensive",
+    "cs": "counter strike",
     "pubg": "playerunknowns battlegrounds",
+    "rdr": "red dead redemption",
+    "rdr2": "red dead redemption 2",
+    "wow": "world of warcraft",
+    "ff": "final fantasy",
+    "ac": "assassins creed",
+    "mk": "mario kart",
+    "lol": "league of legends",
+    "pkmn": "pokemon",
+    "smash": "super smash bros",
+    "ssb": "super smash bros",
+    "tf2": "team fortress 2",
+
+    # Pop Culture, Movies & Anime
+    "lotr": "lord of the rings",
+    "hp": "harry potter",
+    "got": "game of thrones",
     "mcu": "marvel cinematic universe",
+    "dcu": "dc extended universe",
+    "sw": "star wars",
+    "st": "stranger things",
+    "bb": "breaking bad",
+    "bcs": "better call saul",
+    "potc": "pirates of the caribbean",
+    "atla": "avatar the last airbender",
+    "fma": "fullmetal alchemist",
+    "aot": "attack on titan",
+    "dbz": "dragon ball z",
+    "dbs": "dragon ball super",
+    "op": "one piece",
+    "jjk": "jujutsu kaisen",
+    "mha": "my hero academia",
+    "ds": "demon slayer",
+    "hxh": "hunter x hunter",
+
+    # Geography & Countries
+    "usa": "united states",
+    "us": "united states",
+    "uk": "united kingdom",
+    "uae": "united arab emirates",
+    "drc": "democratic republic of the congo",
+    "car": "central african republic",
+    "nz": "new zealand",
+    "sa": "south africa",
+    "prc": "china",
+    "ussr": "russia",
+
+    # Common Terms & Titles
+    "dr": "doctor",
+    "mr": "mister",
+    "mrs": "missus",
+    "ms": "miss",
+    "st": "saint",
+    "mt": "mount",
+    "vs": "versus",
+    "vol": "volume",
+    "pt": "part",
+    "ep": "episode",
+    "gen": "generation"
 }
+
+def levenshtein_distance(s1: str, s2: str) -> int:
+    if len(s1) < len(s2):
+        return levenshtein_distance(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+    return previous_row[-1]
+
+def evaluate_guess_match(clean_guess: str, clean_name: str) -> tuple[bool, float]:
+    if not clean_guess or not clean_name:
+        return False, 0.0
+    if clean_guess == clean_name:
+        return True, 1.0
+
+    clean_guess_nospace = clean_guess.replace(" ", "")
+    clean_name_nospace = clean_name.replace(" ", "")
+    if clean_guess_nospace == clean_name_nospace and len(clean_guess_nospace) >= 4:
+        return True, 0.98
+
+    min_len = min(len(clean_guess), len(clean_name))
+    diff = abs(len(clean_guess) - len(clean_name))
+
+    # Levenshtein distance check for typos
+    if min_len >= 4 and diff <= 2:
+        dist = levenshtein_distance(clean_guess, clean_name)
+        if dist <= 1:
+            return True, 0.90
+        if dist <= 2 and min_len >= 5:
+            return True, 0.85
+
+    # SequenceMatcher ratio check
+    ratio = SequenceMatcher(None, clean_guess, clean_name).ratio()
+    if min_len >= 4 and ratio >= 0.82:
+        return True, ratio
+
+    return False, ratio
 
 def remove_accents(input_str: str) -> str:
     nfkd = unicodedata.normalize('NFKD', input_str)
@@ -69,6 +173,19 @@ def remove_accents(input_str: str) -> str:
 def normalize_text(text: str) -> str:
     text = remove_accents(text.lower().strip())
     text = text.replace("&", " and ")
+
+    # Normalize common superhero and character words
+    common_contractions = {
+        "spiderman": "spider man",
+        "ironman": "iron man",
+        "batman": "bat man",
+        "pacman": "pac man",
+        "antman": "ant man",
+        "aquaman": "aqua man",
+        "xmen": "x men"
+    }
+    for orig_c, rep_c in common_contractions.items():
+        text = re.sub(r'\b' + orig_c + r'\b', rep_c, text)
 
     tokens = text.split()
     expanded = [ABBREVIATIONS.get(t, t) for t in tokens]
@@ -288,6 +405,7 @@ def get_game_state():
         "revealed_indices": game.revealed_indices,
         "revealed_by": game.revealed_by,
         "current_round_title": current_round.get("title", "UNKNOWN ROUND"),
+        "current_round_subtitle": current_round.get("subtitle", ""),
         "current_round_answers": current_round.get("answers", []),
         "is_round_over": game.is_round_over,
         "is_match_over": game.is_match_over,
@@ -301,6 +419,7 @@ def get_categories():
         {
             "index": i,
             "title": r.get("title", f"Category {i + 1}"),
+            "subtitle": r.get("subtitle", ""),
             "count": len(r.get("answers", []))
         }
         for i, r in enumerate(game.rounds_data)
@@ -453,14 +572,14 @@ def submit_guess(data: GuessInput):
                     best_score = 0.95
                     break
 
-        # Fuzzy ratio check with high threshold for typo tolerance
-        fuzz = SequenceMatcher(None, clean_guess, clean_name).ratio()
-        if fuzz >= 0.84 and fuzz > best_score:
-            best_score = fuzz
+        # Smart Typo & Fuzzy Matching via Levenshtein & SequenceMatcher
+        is_matched, match_score = evaluate_guess_match(clean_guess, clean_name)
+        if is_matched and match_score > best_score:
+            best_score = match_score
             best_match_index = i
 
     # Process Correct Guess
-    if best_match_index != -1 and best_score >= 0.84:
+    if best_match_index != -1 and best_score >= 0.82:
         rank = best_match_index + 1
         points = game.calculate_points(best_match_index)
         name = answers[best_match_index]
@@ -509,8 +628,8 @@ def submit_guess(data: GuessInput):
         if guess_sequels and not (guess_sequels & answer_sequels):
             continue
 
-        fuzz = SequenceMatcher(None, clean_guess, clean_name).ratio()
-        if clean_guess == clean_name or fuzz >= 0.84 or (len(clean_guess) >= 4 and clean_guess in clean_name):
+        is_matched, match_score = evaluate_guess_match(clean_guess, clean_name)
+        if clean_guess == clean_name or is_matched or (len(clean_guess) >= 4 and clean_guess in clean_name):
             return {"status": "exists", "name": orig_name, "index": i}
         if "(" in orig_name and ")" in orig_name:
             main_p = strip_leading_articles(normalize_text(orig_name.split("(")[0]))
@@ -891,6 +1010,7 @@ class OnlineRoom:
                 "revealed_indices": self.game_state.revealed_indices,
                 "revealed_by": self.game_state.revealed_by,
                 "current_round_title": current_round.get("title", "UNKNOWN ROUND"),
+                "current_round_subtitle": current_round.get("subtitle", ""),
                 "current_round_answers": current_round.get("answers", []),
                 "is_round_over": self.game_state.is_round_over,
                 "is_match_over": self.game_state.is_match_over,
@@ -985,12 +1105,12 @@ def process_online_guess(room: OnlineRoom, player: OnlinePlayer, guess_text: str
                     best_score = 0.95
                     break
 
-        fuzz = SequenceMatcher(None, clean_guess, clean_name).ratio()
-        if fuzz >= 0.84 and fuzz > best_score:
-            best_score = fuzz
+        is_matched, match_score = evaluate_guess_match(clean_guess, clean_name)
+        if is_matched and match_score > best_score:
+            best_score = match_score
             best_match_index = i
 
-    if best_match_index != -1 and best_score >= 0.84:
+    if best_match_index != -1 and best_score >= 0.82:
         rank = best_match_index + 1
         points = room.game_state.calculate_points(best_match_index)
         name = answers[best_match_index]

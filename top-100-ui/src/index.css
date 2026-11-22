@@ -205,7 +205,7 @@
     0 1px 0 0 #0d0d0d;
 }
 
-/* 1. ROYAL AMETHYST VIOLET BUTTON (Rich bridge between Red & Blue) */
+/* 1. BRIGHT GOLDEN-AMBER BUTTON (High-Contrast Arcade Warmth) */
 .pixel-btn-play,
 .pixel-btn-burgundy,
 .balatro-btn-pink,
@@ -217,15 +217,17 @@
 .pixel-btn-neutral,
 .pixel-btn-settings,
 .balatro-btn-teal,
-.balatro-btn-green {
-  background: #7c3aed;
-  color: #ffffff;
+.balatro-btn-green,
+.balatro-btn-amber {
+  background: #d97706;
+  color: #451a03;
   border: 3.5px solid #0d0d0d;
+  font-weight: 900;
   box-shadow:
-    inset 0 3px 0 0 #c4b5fd,
-    inset 3px 0 0 0 #c4b5fd,
-    inset 0 -16px 0 0 #5b21b6,
-    inset 0 -14px 0 0 #3b0764,
+    inset 0 3px 0 0 #fef08a,
+    inset 3px 0 0 0 #fef08a,
+    inset 0 -16px 0 0 #92400e,
+    inset 0 -14px 0 0 #78350f,
     0 4.5px 0 0 #0d0d0d;
 }
 .pixel-btn-play:hover,
@@ -239,14 +241,15 @@
 .pixel-btn-neutral:hover,
 .pixel-btn-settings:hover,
 .balatro-btn-teal:hover,
-.balatro-btn-green:hover {
-  background: #8b5cf6;
-  filter: brightness(1.12);
+.balatro-btn-green:hover,
+.balatro-btn-amber:hover {
+  background: #f59e0b;
+  filter: brightness(1.1);
   box-shadow:
-    inset 0 3px 0 0 #ddd6fe,
-    inset 3px 0 0 0 #ddd6fe,
-    inset 0 -16px 0 0 #5b21b6,
-    inset 0 -14px 0 0 #3b0764,
+    inset 0 3px 0 0 #fef9c3,
+    inset 3px 0 0 0 #fef9c3,
+    inset 0 -16px 0 0 #92400e,
+    inset 0 -14px 0 0 #78350f,
     0 6px 0 0 #0d0d0d;
 }
 .pixel-btn-play:active,
@@ -260,109 +263,118 @@
 .pixel-btn-neutral:active,
 .pixel-btn-settings:active,
 .balatro-btn-teal:active,
-.balatro-btn-green:active {
+.balatro-btn-green:active,
+.balatro-btn-amber:active {
   transform: translateY(6.5px);
   box-shadow:
-    inset 0 1.5px 0 0 #c4b5fd,
-    inset 1.5px 0 0 0 #c4b5fd,
-    inset 0 -8px 0 0 #5b21b6,
-    inset 0 -6px 0 0 #3b0764,
+    inset 0 1.5px 0 0 #fef08a,
+    inset 1.5px 0 0 0 #fef08a,
+    inset 0 -8px 0 0 #92400e,
+    inset 0 -6px 0 0 #78350f,
     0 1px 0 0 #0d0d0d;
 }
 
-/* 2. ELECTRIC INDIGO BUTTON */
+/* 2. ELECTRIC CYAN / SAPPHIRE BUTTON */
 .pixel-btn-options,
 .balatro-btn-cyan {
-  background: #4f46e5;
+  background: #0284c7;
   color: #ffffff;
   border: 3.5px solid #0d0d0d;
   box-shadow:
-    inset 0 3px 0 0 #818cf8,
-    inset 3px 0 0 0 #818cf8,
-    inset 0 -16px 0 0 #3730a3,
-    inset 0 -14px 0 0 #1e1b4b,
+    inset 0 3px 0 0 #7dd3fc,
+    inset 3px 0 0 0 #7dd3fc,
+    inset 0 -16px 0 0 #0369a1,
+    inset 0 -14px 0 0 #075985,
     0 4.5px 0 0 #0d0d0d;
 }
 .pixel-btn-options:hover,
 .balatro-btn-cyan:hover {
-  background: #6366f1;
+  background: #0ea5e9;
   box-shadow:
-    inset 0 3px 0 0 #a5b4fc,
-    inset 3px 0 0 0 #a5b4fc,
-    inset 0 -16px 0 0 #3730a3,
-    inset 0 -14px 0 0 #1e1b4b,
+    inset 0 3px 0 0 #bae6fd,
+    inset 3px 0 0 0 #bae6fd,
+    inset 0 -16px 0 0 #0369a1,
+    inset 0 -14px 0 0 #075985,
     0 6px 0 0 #0d0d0d;
 }
 .pixel-btn-options:active,
 .balatro-btn-cyan:active {
   box-shadow:
-    inset 0 1.5px 0 0 #818cf8,
-    inset 1.5px 0 0 0 #818cf8,
-    inset 0 -8px 0 0 #3730a3,
-    inset 0 -6px 0 0 #1e1b4b,
+    inset 0 1.5px 0 0 #7dd3fc,
+    inset 1.5px 0 0 0 #7dd3fc,
+    inset 0 -8px 0 0 #0369a1,
+    inset 0 -6px 0 0 #075985,
     0 1px 0 0 #0d0d0d;
 }
 
-/* 3. MIDNIGHT NAVY-VIOLET BUTTON (Secondary / Neutral) */
+/* 3. OBSIDIAN GRAPHITE BUTTON (Secondary / Neutral) */
 .pixel-btn-exit,
 .balatro-btn-exit,
-.balatro-btn-slate {
-  background: #1e1b4b;
-  color: #ffffff;
+.balatro-btn-slate,
+.balatro-btn-dark,
+.pixel-btn-dark {
+  background: #111827;
+  color: #fffbd4;
   border: 3.5px solid #0d0d0d;
   box-shadow:
-    inset 0 3px 0 0 #4f46e5,
-    inset 3px 0 0 0 #4f46e5,
-    inset 0 -16px 0 0 #0f0e26,
-    inset 0 -14px 0 0 #080718,
+    inset 0 3px 0 0 #374151,
+    inset 3px 0 0 0 #374151,
+    inset 0 -16px 0 0 #030712,
+    inset 0 -14px 0 0 #000000,
     0 4.5px 0 0 #0d0d0d;
 }
 .pixel-btn-exit:hover,
 .balatro-btn-exit:hover,
-.balatro-btn-slate:hover {
-  background: #312e81;
+.balatro-btn-slate:hover,
+.balatro-btn-dark:hover,
+.pixel-btn-dark:hover {
+  background: #1f2937;
+  color: #ffffff;
   box-shadow:
-    inset 0 3px 0 0 #6366f1,
-    inset 3px 0 0 0 #6366f1,
-    inset 0 -16px 0 0 #0f0e26,
-    inset 0 -14px 0 0 #080718,
+    inset 0 3px 0 0 #4b5563,
+    inset 3px 0 0 0 #4b5563,
+    inset 0 -16px 0 0 #030712,
+    inset 0 -14px 0 0 #000000,
     0 6px 0 0 #0d0d0d;
 }
 .pixel-btn-exit:active,
 .balatro-btn-exit:active,
-.balatro-btn-slate:active {
+.balatro-btn-slate:active,
+.balatro-btn-dark:active,
+.pixel-btn-dark:active {
+  transform: translateY(6.5px);
   box-shadow:
-    inset 0 1.5px 0 0 #4f46e5,
-    inset 1.5px 0 0 0 #4f46e5,
-    inset 0 -8px 0 0 #0f0e26,
-    inset 0 -6px 0 0 #080718,
+    inset 0 1.5px 0 0 #374151,
+    inset 1.5px 0 0 0 #374151,
+    inset 0 -8px 0 0 #030712,
+    inset 0 -6px 0 0 #000000,
     0 1px 0 0 #0d0d0d;
 }
 
-/* 4. VIBRANT MAGENTA ORCHID BUTTON (Danger / Quit / Surrender - Perfect chromatic balance between Red & Blue) */
+/* 4. RUBY CRIMSON DANGER BUTTON (Quit / Surrender / Leave) */
 .pixel-btn-start,
 .balatro-btn-orange,
 .balatro-btn-red {
-  background: #a21caf;
+  background: #be123c;
   color: #ffffff;
   border: 3.5px solid #0d0d0d;
   box-shadow:
-    inset 0 3px 0 0 #f0abfc,
-    inset 3px 0 0 0 #f0abfc,
-    inset 0 -16px 0 0 #701a75,
-    inset 0 -14px 0 0 #4a044e,
+    inset 0 3px 0 0 #fda4af,
+    inset 3px 0 0 0 #fda4af,
+    inset 0 -16px 0 0 #881337,
+    inset 0 -14px 0 0 #4c0519,
     0 4.5px 0 0 #0d0d0d;
 }
 .pixel-btn-start:hover,
 .balatro-btn-orange:hover,
 .balatro-btn-red:hover {
-  background: #c026d3;
+  background: #e11d48;
   filter: brightness(1.12);
   box-shadow:
-    inset 0 3px 0 0 #fae8ff,
-    inset 3px 0 0 0 #fae8ff,
-    inset 0 -16px 0 0 #701a75,
-    inset 0 -14px 0 0 #4a044e,
+    inset 0 3px 0 0 #ffe4e6,
+    inset 3px 0 0 0 #ffe4e6,
+    inset 0 -16px 0 0 #881337,
+    inset 0 -14px 0 0 #4c0519,
     0 6px 0 0 #0d0d0d;
 }
 .pixel-btn-start:active,
@@ -370,10 +382,10 @@
 .balatro-btn-red:active {
   transform: translateY(6.5px);
   box-shadow:
-    inset 0 1.5px 0 0 #f0abfc,
-    inset 1.5px 0 0 0 #f0abfc,
-    inset 0 -8px 0 0 #701a75,
-    inset 0 -6px 0 0 #4a044e,
+    inset 0 1.5px 0 0 #fda4af,
+    inset 1.5px 0 0 0 #fda4af,
+    inset 0 -8px 0 0 #881337,
+    inset 0 -6px 0 0 #4c0519,
     0 1px 0 0 #0d0d0d;
 }
 
@@ -849,12 +861,14 @@
   --color-coral: #38bdf8;
 }
 
-/* Card, Panel, Modal borders */
+/* Card, Panel, Modal borders & surfaces in Blue Mode */
 .theme-blue .balatro-card,
 .theme-blue .balatro-card-interactive,
 .theme-blue .balatro-panel,
 .theme-blue .balatro-modal {
+  background: #0e1422 !important;
   border-color: #1e40af !important;
+  box-shadow: 0 4px 0 #050811, inset 0 1.5px 0 rgba(56, 189, 248, 0.15) !important;
 }
 
 /* Red & Coral Border Overrides */

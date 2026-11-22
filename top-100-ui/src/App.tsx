@@ -50,6 +50,7 @@ export default function App(): React.JSX.Element {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showOnlineLobby, setShowOnlineLobby] = useState<boolean>(false);
   const [showTeams, setShowTeams] = useState<boolean>(false);
+  const [pendingMatchConfig, setPendingMatchConfig] = useState<MatchConfig | null>(null);
   const [showHostOverride, setShowHostOverride] = useState<boolean>(false);
   const [showRoundSummary, setShowRoundSummary] = useState<boolean>(false);
   const [showMatchPodium, setShowMatchPodium] = useState<boolean>(false);
@@ -994,7 +995,10 @@ export default function App(): React.JSX.Element {
             initialMode={setupInitialMode}
             onStartMatch={handleStartMatch}
             onBack={returnToMainMenu}
-            onOpenTeams={() => setShowTeams(true)}
+            onOpenTeams={(cfg) => {
+              if (cfg) setPendingMatchConfig(cfg);
+              setShowTeams(true);
+            }}
             teams={gameState?.teams || []}
             defaultSettings={gameState?.settings}
             turnTimer={gameState?.settings?.turn_timer ?? 30}
@@ -1224,6 +1228,19 @@ export default function App(): React.JSX.Element {
                 >
                   Results Overview
                 </button>
+                {!isOnline && (
+                  <button
+                    type="button"
+                    onMouseEnter={() => soundFx.playHover()}
+                    onClick={() => {
+                      soundFx.playClick();
+                      setScreen('MATCH_SETUP');
+                    }}
+                    className="balatro-btn-dark border-2 border-amber-500/60 font-black px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer shadow-md text-amber-300 hover:border-amber-400 hover:text-white transition whitespace-nowrap shrink-0"
+                  >
+                    Categories
+                  </button>
+                )}
                 {isOnline && online.isHost && (
                   <button
                     type="button"
@@ -1242,10 +1259,15 @@ export default function App(): React.JSX.Element {
           )}
 
           {/* Category Title with Compact Contained Width */}
-          <div className="mb-3 text-center max-w-2xl sm:max-w-3xl mx-auto px-4">
+          <div className="mb-3 text-center max-w-2xl sm:max-w-3xl mx-auto px-4 flex flex-col items-center">
             <h1 className="text-sm sm:text-base md:text-lg font-black text-[#fffbd4] uppercase tracking-wide px-2 drop-shadow-[0_2px_0_#0d0d0d] leading-snug break-words">
               {activeGameState.current_round_title || 'Loading Category...'}
             </h1>
+            {activeGameState.current_round_subtitle && (
+              <span className="mt-1 px-3 py-0.5 rounded-full bg-amber-950/70 border border-amber-500/60 text-amber-300 text-xs font-bold tracking-wide shadow-sm max-w-xl truncate">
+                {activeGameState.current_round_subtitle}
+              </span>
+            )}
           </div>
 
           {/* Team Scorecards */}
@@ -1364,10 +1386,10 @@ export default function App(): React.JSX.Element {
                     lastGuess.status === 'correct'
                       ? 'bg-[#15803d] text-white shadow-[0_1px_0_#0d0d0d]'
                       : lastGuess.status === 'exists'
-                      ? 'bg-[#0d0d0d] border border-[#ef5368] text-[#ef5368]'
+                      ? 'bg-amber-950/90 border border-amber-500 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.5)]'
                       : 'bg-[#0d0d0d] border border-[#891c1c] text-[#ef5368]'
                   }`}>
-                    {lastGuess.status === 'correct' ? 'Correct ✓' : lastGuess.status === 'exists' ? 'Duplicate' : 'Incorrect ✕'}
+                    {lastGuess.status === 'correct' ? 'Correct ✓' : lastGuess.status === 'exists' ? 'Already Found ⚠' : 'Incorrect ✕'}
                   </span>
                 )}
               </div>
@@ -1400,8 +1422,9 @@ export default function App(): React.JSX.Element {
                     )}
 
                     {lastGuess.status === 'exists' && (
-                      <div className="text-xs text-[#ef5368] font-mono font-black uppercase tracking-wider mt-1.5">
-                        Already Found
+                      <div className="text-xs text-amber-300 font-mono font-black uppercase tracking-wider mt-1.5 flex items-center gap-1">
+                        <span>Already Found</span>
+                        {lastGuess.rank && <span className="text-amber-400/80">(#{lastGuess.rank})</span>}
                       </div>
                     )}
                     {lastGuess.status === 'incorrect' && (
@@ -1418,7 +1441,7 @@ export default function App(): React.JSX.Element {
             <div className="flex-1 w-full max-w-lg mx-auto flex flex-col items-center justify-center">
               {/* Turn indicator and countdown timer if enabled */}
               {!isBossRush && !activeGameState.is_round_over && (
-                <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex items-center gap-3 mb-2">
                   <span className="text-xs font-black text-[#fffbd4] uppercase tracking-wider">
                     {isOnline ? (
                       isMyTurn ? (
@@ -1434,16 +1457,18 @@ export default function App(): React.JSX.Element {
                         (Turn {(activeGameState.turns_taken?.[activeGameState.current_turn] || 0) + 1} of {maxTurns})
                       </span>
                     )}
-                    :
                   </span>
                   {timeRemaining !== null && (
-                    <span className={`font-mono font-black text-lg ${
-                      timeRemaining <= 5 
-                        ? 'text-rose-400 animate-pulse' 
-                        : 'text-[#ef5368]'
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-mono font-black text-base md:text-lg border-2 shadow-lg transition-all ${
+                      timeRemaining <= 5
+                        ? 'bg-rose-950/90 border-rose-500 text-rose-300 animate-pulse shadow-[0_0_12px_rgba(244,63,94,0.7)]'
+                        : timeRemaining <= 10
+                        ? 'bg-amber-950/80 border-amber-400 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.5)]'
+                        : 'bg-[#0d0d0d] border-cyan-500/70 text-cyan-300 shadow-[0_0_8px_rgba(56,189,248,0.3)]'
                     }`}>
-                      {timeRemaining}s
-                    </span>
+                      <span className="text-xs">⏱</span>
+                      <span>{timeRemaining}s</span>
+                    </div>
                   )}
                 </div>
               )}
@@ -1489,8 +1514,8 @@ export default function App(): React.JSX.Element {
                 </div>
               )}
 
-              {/* Offline Stall prompt after 10 consecutive incorrect guesses */}
-              {!isOnline && consecutiveIncorrect >= 10 && !activeGameState.is_round_over && (
+              {/* Offline Stall prompt after 20 consecutive incorrect guesses */}
+              {!isOnline && consecutiveIncorrect >= 20 && !activeGameState.is_round_over && (
                 <div className="w-full mt-2 p-2 px-3 bg-[#0a0f23] border border-slate-700 rounded-lg flex items-center justify-between gap-2.5 text-xs text-[#fffbd4] animate-in fade-in shadow-[0_2px_0_#0d0d0d]">
                   <div className="flex items-center gap-1.5 text-left text-xs">
                     <span>💡</span>
@@ -1726,6 +1751,14 @@ export default function App(): React.JSX.Element {
           teams={activeGameState.teams || []}
           onSave={handleSaveTeams}
           onClose={() => setShowTeams(false)}
+          onStartGame={
+            screen === 'MATCH_SETUP' && pendingMatchConfig
+              ? () => {
+                  setShowTeams(false);
+                  handleStartMatch(pendingMatchConfig);
+                }
+              : undefined
+          }
         />
       )}
 
@@ -1751,6 +1784,10 @@ export default function App(): React.JSX.Element {
           }}
           onInspectBoard={() => setShowRoundSummary(false)}
           onReturnMenu={handleRequestMainMenu}
+          onSelectCategories={!isOnline ? () => {
+            setShowRoundSummary(false);
+            setScreen('MATCH_SETUP');
+          } : undefined}
         />
       )}
 
@@ -1780,6 +1817,10 @@ export default function App(): React.JSX.Element {
           onPlayAgain={handlePlayAgain}
           onReturnMenu={handleRequestMainMenu}
           onReturnToLobby={isOnline && online.isHost ? () => setShowReturnToLobbyConfirm(true) : undefined}
+          onSelectCategories={!isOnline ? () => {
+            setShowCelebration(false);
+            setScreen('MATCH_SETUP');
+          } : undefined}
         />
       )}
 

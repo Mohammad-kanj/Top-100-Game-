@@ -6,7 +6,7 @@ interface MatchSetupProps {
   categories: Category[];
   onStartMatch: (config: MatchConfig) => void;
   onBack: () => void;
-  onOpenTeams: () => void;
+  onOpenTeams: (config?: MatchConfig) => void;
   initialMode?: 'single' | 'multi' | 'boss_rush';
   teams?: string[];
   defaultSettings?: GameSettings;
@@ -59,6 +59,15 @@ export default function MatchSetup({
     return [0];
   });
   const [showOneTeamModal, setShowOneTeamModal] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const filteredCategories = React.useMemo(() => {
+    if (!searchQuery.trim()) return categories;
+    const q = searchQuery.toLowerCase().trim();
+    return categories.filter((cat) =>
+      cat.title.toLowerCase().includes(q) || (cat.subtitle && cat.subtitle.toLowerCase().includes(q))
+    );
+  }, [categories, searchQuery]);
 
   // Match rules chosen pre-game
   const [turnTimerSetting, setTurnTimerSetting] = useState<number>(defaultSettings?.turn_timer ?? turnTimer ?? 30);
@@ -120,6 +129,22 @@ export default function MatchSetup({
     setSelectedIndices(shuffled.slice(0, count));
   };
 
+  const getMatchConfig = (): MatchConfig => ({
+    match_mode: matchMode,
+    total_rounds: matchMode === 'multi' ? totalRounds : 1,
+    category_indices: selectedIndices,
+    boss_rush_duration: bossRushDuration,
+    turn_timer: matchMode === 'boss_rush' ? 0 : turnTimerSetting,
+    point_threshold: pointThreshold,
+    max_turns: maxTurns,
+    end_condition: endCondition
+  });
+
+  const handleNextToTeams = (): void => {
+    soundFx.playClick();
+    onOpenTeams(getMatchConfig());
+  };
+
   const handleStart = (): void => {
     if (isLessThanTwoTeams) {
       soundFx.playIncorrect();
@@ -127,16 +152,7 @@ export default function MatchSetup({
       return;
     }
     soundFx.playFanfare();
-    onStartMatch({
-      match_mode: matchMode,
-      total_rounds: matchMode === 'multi' ? totalRounds : 1,
-      category_indices: selectedIndices,
-      boss_rush_duration: bossRushDuration,
-      turn_timer: matchMode === 'boss_rush' ? 0 : turnTimerSetting,
-      point_threshold: pointThreshold,
-      max_turns: maxTurns,
-      end_condition: endCondition
-    });
+    onStartMatch(getMatchConfig());
   };
 
   return (
@@ -334,70 +350,103 @@ export default function MatchSetup({
         </div>
       )}
 
-      {/* Category Selection Header */}
-      <div className="w-full flex items-center justify-between mb-3 px-1">
-        <div>
-          <h2 className="text-sm font-black text-[#fffbd4] tracking-wider uppercase drop-shadow-[0_1px_0_#0d0d0d]">
-            Select {matchMode === 'single' ? 'Category' : `Categories (${selectedIndices.length} / ${totalRounds})`}
-          </h2>
-          <p className="text-xs text-[#fffbd4]/70 font-semibold">
-            {matchMode === 'single' ? 'Pick a category to begin' : 'Choose in order of play'}
-          </p>
+      {/* Category Selection Header & Search Bar */}
+      <div className="w-full flex flex-col gap-2.5 mb-3 px-1">
+        <div className="w-full flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-black text-[#fffbd4] tracking-wider uppercase drop-shadow-[0_1px_0_#0d0d0d]">
+              Select {matchMode === 'single' ? 'Category' : `Categories (${selectedIndices.length} / ${totalRounds})`}
+            </h2>
+            <p className="text-xs text-[#fffbd4]/70 font-semibold">
+              {matchMode === 'single' ? 'Pick a category to begin' : 'Choose in order of play'}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onMouseEnter={() => soundFx.playHover()}
+            onClick={handleRandomize}
+            className="balatro-btn-dark px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer text-[#fffbd4]"
+          >
+            Random Selection
+          </button>
         </div>
 
-        <button
-          type="button"
-          onMouseEnter={() => soundFx.playHover()}
-          onClick={handleRandomize}
-          className="balatro-btn-dark px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer text-[#fffbd4]"
-        >
-          Random Selection
-        </button>
+        {/* Search Bar */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search categories (e.g. animals, movies, gaming, food)..."
+            className="w-full bg-[#0a0f23]/90 border-2 border-slate-700/80 focus:border-amber-400 rounded-xl px-3.5 py-2 text-xs md:text-sm text-[#fffbd4] placeholder-slate-400 focus:outline-none transition shadow-inner"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-black px-1.5 py-0.5 rounded cursor-pointer"
+            >
+              CLEAR
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Category Grid with Balatro Slabs */}
-      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6 max-h-[44vh] overflow-y-auto pr-1">
-        {categories.map((cat) => {
-          const isSelected = selectedIndices.includes(cat.index);
-          const orderIndex = selectedIndices.indexOf(cat.index);
+      {/* Category Grid with Hidden Scrollbar */}
+      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6 max-h-[44vh] overflow-y-auto px-1 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {filteredCategories.length === 0 ? (
+          <div className="col-span-full py-8 text-center text-slate-400 font-bold text-sm bg-black/30 rounded-xl border border-slate-800">
+            No categories found matching &quot;{searchQuery}&quot;. Try another search term!
+          </div>
+        ) : (
+          filteredCategories.map((cat) => {
+            const isSelected = selectedIndices.includes(cat.index);
+            const orderIndex = selectedIndices.indexOf(cat.index);
 
-          return (
-            <div
-              key={cat.index}
-              onMouseEnter={() => soundFx.playHover()}
-              onClick={() => toggleCategory(cat.index)}
-              className={`relative rounded-xl cursor-pointer transition-all flex flex-col justify-between select-none min-h-[132px] px-4 pt-3.5 pb-5 ${
-                isSelected
-                  ? 'bg-[#0d0d0d] border-2 border-[#fffbd4] cat-card-selected'
-                  : 'cat-card-unselected'
-              }`}
-            >
-              {/* Absolute Badge: positioned top-3 right-3, never squeezes text */}
-              {isSelected && (
-                <span className="cat-selected-badge absolute top-3 right-3 w-6 h-6 rounded-full font-black text-xs flex items-center justify-center shrink-0 z-10 pointer-events-none">
-                  {matchMode === 'multi' ? orderIndex + 1 : '✓'}
-                </span>
-              )}
+            return (
+              <div
+                key={cat.index}
+                onMouseEnter={() => soundFx.playHover()}
+                onClick={() => toggleCategory(cat.index)}
+                className={`relative rounded-xl cursor-pointer transition-all flex flex-col justify-between select-none min-h-[132px] px-4 pt-3.5 pb-5 ${
+                  isSelected
+                    ? 'bg-[#0d0d0d] border-2 border-[#fffbd4] cat-card-selected'
+                    : 'cat-card-unselected'
+                }`}
+              >
+                {/* Absolute Badge: positioned top-3 right-3, never squeezes text */}
+                {isSelected && (
+                  <span className="cat-selected-badge absolute top-3 right-3 w-6 h-6 rounded-full font-black text-xs flex items-center justify-center shrink-0 z-10 pointer-events-none">
+                    {matchMode === 'multi' ? orderIndex + 1 : '✓'}
+                  </span>
+                )}
 
-              {/* Title Section with reserved right padding for badge */}
-              <div className="mb-2 pr-7 min-w-0">
-                <span className={`font-black text-sm leading-snug break-words block ${isSelected ? 'text-[#fffbd4]' : 'text-[#fffbd4]/80'}`}>
-                  {cat.title}
-                </span>
+                {/* Title Section with reserved right padding for badge */}
+                <div className="mb-2 pr-7 min-w-0">
+                  <span className={`font-black text-sm leading-snug break-words block ${isSelected ? 'text-[#fffbd4]' : 'text-[#fffbd4]/80'}`}>
+                    {cat.title}
+                  </span>
+                  {cat.subtitle && (
+                    <span className="text-[11px] font-semibold text-amber-300/90 leading-tight block mt-1">
+                      {cat.subtitle}
+                    </span>
+                  )}
+                </div>
+
+                {/* Footer row with dedicated bottom clearance */}
+                <div className="flex items-center justify-between mt-auto pt-2 pb-0">
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${isSelected ? 'cat-count-badge-selected' : 'bg-[#0d0d0d] text-[#fffbd4]/60'}`}>
+                    {cat.count} Items
+                  </span>
+                  <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'cat-status-selected' : 'text-[#fffbd4]/50'}`}>
+                    {isSelected ? (matchMode === 'multi' ? `Round ${orderIndex + 1}` : 'Selected') : 'Pick'}
+                  </span>
+                </div>
               </div>
-
-              {/* Footer row with dedicated bottom clearance */}
-              <div className="flex items-center justify-between mt-auto pt-2 pb-0">
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${isSelected ? 'cat-count-badge-selected' : 'bg-[#0d0d0d] text-[#fffbd4]/60'}`}>
-                  {cat.count} Items
-                </span>
-                <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'cat-status-selected' : 'text-[#fffbd4]/50'}`}>
-                  {isSelected ? (matchMode === 'multi' ? `Round ${orderIndex + 1}` : 'Selected') : 'Pick'}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {/* Match Rules & Timers (Configured Pre-Game) */}
@@ -604,15 +653,11 @@ export default function MatchSetup({
         ) : (
           <button
             type="button"
-            onClick={handleStart}
+            onClick={handleNextToTeams}
             onMouseEnter={() => soundFx.playHover()}
             className="font-black text-xl md:text-2xl px-12 py-4 rounded-2xl tracking-wider uppercase transition shadow-xl balatro-btn-purple text-white cursor-pointer"
           >
-            {matchMode === 'boss_rush'
-              ? `Start Boss Rush (${bossRushDuration / 60}m)`
-              : matchMode === 'single'
-              ? 'Start Game'
-              : `Start ${totalRounds}-Round Match`}
+            Next: Configure Teams →
           </button>
         )}
       </div>
