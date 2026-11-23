@@ -149,7 +149,7 @@ export default function SettingsModal({
                 className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer border transition ${
                   isMuted
                     ? 'bg-[#891c1c] text-[#fffbd4] border-[#ef5368] shadow-md'
-                    : 'balatro-btn-dark text-[#fffbd4] border-[#891c1c]'
+                    : 'balatro-btn-dark text-[#fffbd4] border-[#0d0d0d]'
                 }`}
               >
                 {isMuted ? '🔇 Audio Muted' : '🔊 Audio Active'}
@@ -186,7 +186,7 @@ export default function SettingsModal({
                   }}
                   onMouseUp={() => soundFx.playSettingsChange()}
                   onTouchEnd={() => soundFx.playSettingsChange()}
-                  className="flex-1 accent-[#ef5368] settings-slider-red cursor-pointer h-3 disabled:opacity-40"
+                  className="flex-1 settings-slider-red cursor-pointer h-3 disabled:opacity-40"
                 />
                 <span className="text-sm font-mono font-black text-[#fffbd4] w-12 text-right">
                   {isMuted ? '0%' : `${Math.round(sfxVol * 100)}%`}
@@ -232,7 +232,7 @@ export default function SettingsModal({
                   onChange={(e) => handleBrightnessChange(parseFloat(e.target.value))}
                   onMouseUp={() => soundFx.playSettingsChange()}
                   onTouchEnd={() => soundFx.playSettingsChange()}
-                  className="flex-1 accent-[#ef5368] settings-slider-red cursor-pointer h-3"
+                  className="flex-1 settings-slider-red cursor-pointer h-3"
                 />
               </div>
               <p className="text-[11px] text-[#fffbd4]/60 font-semibold">

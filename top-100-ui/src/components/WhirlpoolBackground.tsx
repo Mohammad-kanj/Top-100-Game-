@@ -151,10 +151,15 @@ export default function WhirlpoolBackground({ dominantColor }: WhirlpoolBackgrou
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, width, height);
 
-      // Ambient center vortex glow with coral (#ef5368) and lemon chiffon (#fffbd4)
+      // Ambient center vortex glow: electric azure in blue mode, coral in red mode
       const eyeGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 260);
-      eyeGrad.addColorStop(0, 'rgba(239, 83, 104, 0.22)');
-      eyeGrad.addColorStop(0.5, 'rgba(255, 251, 212, 0.08)');
+      if (currentMode === 'blue') {
+        eyeGrad.addColorStop(0, 'rgba(56, 189, 248, 0.25)');
+        eyeGrad.addColorStop(0.5, 'rgba(147, 197, 253, 0.09)');
+      } else {
+        eyeGrad.addColorStop(0, 'rgba(239, 83, 104, 0.22)');
+        eyeGrad.addColorStop(0.5, 'rgba(255, 251, 212, 0.08)');
+      }
       eyeGrad.addColorStop(1, 'transparent');
       ctx.fillStyle = eyeGrad;
       ctx.beginPath();

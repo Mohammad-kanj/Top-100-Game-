@@ -244,6 +244,72 @@ export default function MatchSetup({
         </button>
       </div>
 
+      {/* Quick Mode Config Bar (Multi-Round) */}
+      {matchMode === 'multi' && !isOnlinePicker && (
+        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 mb-5 shadow-[0_4px_0_#0d0d0d] flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
+          <div className="text-center sm:text-left">
+            <span className="text-xs font-black text-[#fffbd4] uppercase tracking-wider block">
+              Total Match Rounds
+            </span>
+            <span className="text-[11px] text-[#fffbd4]/70 font-semibold">
+              Select between 2 and 5 categories to play sequentially
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-2.5 w-full sm:w-auto">
+            {[2, 3, 4, 5].map((num) => (
+              <button
+                key={num}
+                type="button"
+                onMouseEnter={() => soundFx.playHover()}
+                onClick={() => { soundFx.playClick(); setTotalRounds(num); }}
+                className={`flex-1 sm:flex-initial px-5 py-2.5 min-w-[70px] rounded-xl font-black text-xs sm:text-sm cursor-pointer transition uppercase text-center ${
+                  totalRounds === num
+                    ? 'balatro-btn-blue text-white shadow-md'
+                    : 'balatro-btn-dark text-[#fffbd4]'
+                }`}
+              >
+                {num} Rounds
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Mode Config Bar (Boss Rush) */}
+      {matchMode === 'boss_rush' && !isOnlinePicker && (
+        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 mb-5 shadow-[0_4px_0_#0d0d0d] flex flex-col md:flex-row items-center justify-between gap-3 animate-in fade-in">
+          <div className="text-center md:text-left">
+            <span className="text-xs font-black text-[#ef5368] uppercase tracking-wider block">
+              Boss Rush Duration
+            </span>
+            <span className="text-[11px] text-[#fffbd4]/70 font-semibold">
+              {isOnline ? 'Co-op squad milestone rush against the clock' : 'Solo rush against the clock'}
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-2.5 w-full md:w-auto">
+            {[
+              { label: '5 Min', secs: 300 },
+              { label: '10 Min', secs: 600 },
+              { label: '15 Min', secs: 900 }
+            ].map(({ label, secs }) => (
+              <button
+                key={secs}
+                type="button"
+                onMouseEnter={() => soundFx.playHover()}
+                onClick={() => { soundFx.playClick(); setBossRushDuration(secs); }}
+                className={`flex-1 md:flex-initial px-5 py-2.5 min-w-[75px] rounded-xl font-black text-xs sm:text-sm cursor-pointer transition uppercase text-center ${
+                  bossRushDuration === secs
+                    ? 'balatro-btn-blue text-white shadow-md'
+                    : 'balatro-btn-dark text-[#fffbd4]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Category Selection Header & Search Bar */}
       <div className="w-full flex flex-col gap-2.5 mb-3 px-1">
         <div className="w-full flex items-center justify-between">
@@ -288,7 +354,7 @@ export default function MatchSetup({
       </div>
 
       {/* Category Grid with Hidden Scrollbar (Shows 9 Categories / 3 Rows Before Scroll) */}
-      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6 min-h-[440px] max-h-[62vh] overflow-y-auto px-1 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6 min-h-[440px] max-h-[62vh] content-start items-start auto-rows-max overflow-y-auto px-1 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {filteredCategories.length === 0 ? (
           <div className="col-span-full py-8 text-center text-slate-400 font-bold text-sm bg-black/30 rounded-xl border border-slate-800">
             No categories found matching &quot;{searchQuery}&quot;. Try another search term!
@@ -432,7 +498,7 @@ export default function MatchSetup({
                 <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-2">
                   Total Match Rounds
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                   {[2, 3, 4, 5].map((num) => (
                     <button
                       key={num}

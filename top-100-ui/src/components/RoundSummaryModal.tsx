@@ -67,6 +67,27 @@ export default function RoundSummaryModal({
   const isBossRush = gameState.match_mode === 'boss_rush';
   const displayWinner = gameState.winner || (teams[winnerIndex] ? `${teams[winnerIndex]} Wins` : 'Round Complete');
 
+  // In Boss Rush: tally contributions per player from revealed_by
+  const playerContributions: { name: string; count: number; points: number }[] = [];
+  if (isBossRush && gameState.revealed_by) {
+    const tally: Record<string, { count: number; points: number }> = {};
+    Object.entries(gameState.revealed_by).forEach(([idxStr, playerName]) => {
+      if (playerName && playerName !== 'MISSED' && playerName !== 'UNANSWERED' && playerName !== 'REVEALED') {
+        const idx = parseInt(idxStr, 10);
+        const pts = !isNaN(idx) ? 100 - idx : 0;
+        if (!tally[playerName]) {
+          tally[playerName] = { count: 0, points: 0 };
+        }
+        tally[playerName].count += 1;
+        tally[playerName].points += pts;
+      }
+    });
+    Object.entries(tally).forEach(([name, data]) => {
+      playerContributions.push({ name, count: data.count, points: data.points });
+    });
+    playerContributions.sort((a, b) => b.points - a.points);
+  }
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="balatro-modal rounded-3xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh]">
@@ -81,7 +102,7 @@ export default function RoundSummaryModal({
               : 'Game Complete'}
           </div>
           <h2 className="text-3xl md:text-4xl font-black text-[#fffbd4] tracking-tight uppercase drop-shadow-[0_2px_0_#0d0d0d]">
-            {isBossRush ? `Solo Run: ${roundScores[0] || 0} Pts` : displayWinner}
+            {isBossRush ? `${teams[0] || 'Co-op Squad'}: ${roundScores[0] || 0} Pts` : displayWinner}
           </h2>
           <div className="text-xs font-bold text-[#fffbd4]/80 mt-1">
             Category: {gameState.current_round_title}
@@ -138,6 +159,35 @@ export default function RoundSummaryModal({
               })}
             </div>
           </div>
+
+          {/* Boss Rush Squad Member Contributions */}
+          {isBossRush && playerContributions.length > 0 && (
+            <div className="p-4 rounded-2xl balatro-card">
+              <h3 className="text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-3 drop-shadow-[0_1px_0_#0d0d0d] flex items-center justify-between">
+                <span>Squad Player Contributions</span>
+                <span className="text-[11px] text-[#ef5368] font-bold">
+                  {playerContributions.reduce((sum, p) => sum + p.count, 0)} Answers Found
+                </span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {playerContributions.map((p) => (
+                  <div
+                    key={p.name}
+                    className="p-3 rounded-xl bg-[#0d0d0d] border-2 border-[#891c1c] flex items-center justify-between gap-2 shadow-[0_2px_0_#0d0d0d]"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="font-black text-xs text-[#fffbd4] truncate">{p.name}</div>
+                      <div className="text-[10px] text-[#fffbd4]/60 font-semibold">{p.count} answers</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-black text-[#fffbd4]">{p.points}</div>
+                      <div className="text-[9px] font-mono font-bold text-[#ef5368] uppercase">PTS</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Top 10 Answer Highlights */}
           <div className="p-4 rounded-2xl balatro-card">

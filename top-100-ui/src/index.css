@@ -1020,14 +1020,24 @@
 .theme-red-swatch {
   background-color: #ef5368 !important;
 }
-.settings-slider-red {
+.settings-slider-red,
+input[type="range"].settings-slider-red {
   accent-color: #ef5368 !important;
 }
 .theme-blue .theme-red-swatch {
   background-color: #ef5368 !important;
 }
-.theme-blue .settings-slider-red {
-  accent-color: #ef5368 !important;
+.theme-blue .settings-slider-red,
+.theme-blue input[type="range"].settings-slider-red {
+  accent-color: #38bdf8 !important;
+}
+
+/* Loading screen styles in Blue Mode */
+.theme-blue .balatro-loading-bar {
+  background: linear-gradient(to right, #1e40af, #38bdf8, #fffbd4) !important;
+}
+.theme-blue .balatro-loading-title-shadow {
+  filter: drop-shadow(0 15px 30px rgba(56, 189, 248, 0.45)) !important;
 }
 
 /* Scrollbar in Blue Mode */

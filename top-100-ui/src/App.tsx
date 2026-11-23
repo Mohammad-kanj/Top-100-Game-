@@ -1354,7 +1354,7 @@ export default function App(): React.JSX.Element {
                                 reached
                                   ? 'text-[#ffd700] font-black'
                                   : isTarget
-                                  ? 'text-[#ef5368] font-black underline'
+                                  ? (colorTheme === 'blue' ? 'text-[#38bdf8] font-black underline' : 'text-[#ef5368] font-black underline')
                                   : 'text-[#fffbd4]/40'
                               }`}
                               title={`${m.pts} pts`}
@@ -2011,6 +2011,7 @@ export default function App(): React.JSX.Element {
           message={loadingMatch.message}
           roundNumber={loadingMatch.round}
           totalRounds={loadingMatch.total}
+          colorTheme={colorTheme}
         />
       )}
 

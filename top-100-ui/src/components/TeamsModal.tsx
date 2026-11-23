@@ -85,7 +85,7 @@ export default function TeamsModal({ teams, onSave, onClose, onStartGame, matchM
                 onChange={(e) => updateName(idx, e.target.value)}
                 placeholder={`Team ${idx + 1}`}
                 maxLength={24}
-                className="flex-1 bg-[#0d0d0d] border-2 border-[#891c1c] border-b-4 border-b-[#0a0f23] focus:border-[#fffbd4] text-[#fffbd4] placeholder-[#fffbd4]/40 px-3.5 py-2.5 rounded-xl font-black outline-none text-sm transition shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                className="flex-1 bg-[#0d0d0d] border-2 border-[#891c1c] focus:border-[#fffbd4] text-[#fffbd4] placeholder-[#fffbd4]/40 px-3.5 py-2.5 rounded-xl font-black outline-none text-sm transition shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
               />
               {!isBossRush && localTeams.length > 1 && (
                 <button
@@ -114,18 +114,18 @@ export default function TeamsModal({ teams, onSave, onClose, onStartGame, matchM
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#0d0d0d] border-t-2 border-slate-700 flex justify-between gap-3">
+        <div className="p-4 md:p-5 bg-[#0d0d0d] border-t-2 border-slate-700 flex items-center justify-center gap-4">
           <button
             onClick={() => { soundFx.playClick(); onClose(); }}
             onMouseEnter={() => soundFx.playHover()}
-            className="balatro-btn-dark px-6 py-3 rounded-2xl text-[#fffbd4] font-black transition text-sm md:text-base uppercase tracking-wider cursor-pointer"
+            className="balatro-btn-dark min-w-[140px] px-8 py-3.5 rounded-2xl text-[#fffbd4] font-black transition text-base md:text-lg uppercase tracking-wider cursor-pointer"
           >
             {onStartGame ? 'Back' : 'Cancel'}
           </button>
           <button
             onClick={handleSave}
             onMouseEnter={() => soundFx.playHover()}
-            className="balatro-btn-amber font-black px-8 py-3 rounded-2xl transition tracking-wider text-sm md:text-base uppercase cursor-pointer text-amber-950 shadow-md"
+            className="balatro-btn-amber min-w-[170px] font-black px-10 py-3.5 rounded-2xl transition tracking-wider text-base md:text-lg uppercase cursor-pointer text-amber-950 shadow-md"
           >
             {onStartGame ? 'Start Game' : 'Save Teams'}
           </button>
