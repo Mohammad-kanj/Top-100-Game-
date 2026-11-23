@@ -326,11 +326,6 @@ export default function MatchSetup({
             <h2 className="text-sm md:text-base font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_1px_0_#0d0d0d]">
               Match Rules & Conditions
             </h2>
-            {matchMode === 'multi' && (
-              <span className="text-[11px] font-semibold text-[#fffbd4]/70">
-                Championship Series
-              </span>
-            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
