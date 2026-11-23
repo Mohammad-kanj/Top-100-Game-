@@ -235,7 +235,7 @@ export default function MatchSetup({
               : 'balatro-card opacity-85 hover:opacity-100 hover:border-[#ef5368]'
           }`}
         >
-          <div className="text-lg font-black text-[#ef5368] mb-1">
+          <div className="text-lg font-black text-[#fffbd4] mb-1">
             Boss Rush
           </div>
           <p className="text-xs text-[#fffbd4]/90 font-medium">
@@ -244,178 +244,16 @@ export default function MatchSetup({
         </button>
       </div>
 
-      {/* Quick Mode Config Bar (Multi-Round) */}
-      {matchMode === 'multi' && !isOnlinePicker && (
-        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 mb-5 shadow-[0_4px_0_#0d0d0d] flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
-          <div className="text-center sm:text-left">
-            <span className="text-xs font-black text-[#fffbd4] uppercase tracking-wider block">
-              Total Match Rounds
-            </span>
-            <span className="text-[11px] text-[#fffbd4]/70 font-semibold">
-              Select between 2 and 5 categories to play sequentially
-            </span>
-          </div>
-          <div className="flex items-center justify-center gap-2.5 w-full sm:w-auto">
-            {[2, 3, 4, 5].map((num) => (
-              <button
-                key={num}
-                type="button"
-                onMouseEnter={() => soundFx.playHover()}
-                onClick={() => { soundFx.playClick(); setTotalRounds(num); }}
-                className={`flex-1 sm:flex-initial px-5 py-2.5 min-w-[70px] rounded-xl font-black text-xs sm:text-sm cursor-pointer transition uppercase text-center ${
-                  totalRounds === num
-                    ? 'balatro-btn-blue text-white shadow-md'
-                    : 'balatro-btn-dark text-[#fffbd4]'
-                }`}
-              >
-                {num} Rounds
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Quick Mode Config Bar (Boss Rush) */}
+      {/* Match Settings & Rules (Up Top Directly Beneath Game Modes) */}
       {matchMode === 'boss_rush' && !isOnlinePicker && (
-        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 mb-5 shadow-[0_4px_0_#0d0d0d] flex flex-col md:flex-row items-center justify-between gap-3 animate-in fade-in">
-          <div className="text-center md:text-left">
-            <span className="text-xs font-black text-[#ef5368] uppercase tracking-wider block">
-              Boss Rush Duration
-            </span>
-            <span className="text-[11px] text-[#fffbd4]/70 font-semibold">
-              {isOnline ? 'Co-op squad milestone rush against the clock' : 'Solo rush against the clock'}
-            </span>
-          </div>
-          <div className="flex items-center justify-center gap-2.5 w-full md:w-auto">
-            {[
-              { label: '5 Min', secs: 300 },
-              { label: '10 Min', secs: 600 },
-              { label: '15 Min', secs: 900 }
-            ].map(({ label, secs }) => (
-              <button
-                key={secs}
-                type="button"
-                onMouseEnter={() => soundFx.playHover()}
-                onClick={() => { soundFx.playClick(); setBossRushDuration(secs); }}
-                className={`flex-1 md:flex-initial px-5 py-2.5 min-w-[75px] rounded-xl font-black text-xs sm:text-sm cursor-pointer transition uppercase text-center ${
-                  bossRushDuration === secs
-                    ? 'balatro-btn-blue text-white shadow-md'
-                    : 'balatro-btn-dark text-[#fffbd4]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Category Selection Header & Search Bar */}
-      <div className="w-full flex flex-col gap-2.5 mb-3 px-1">
-        <div className="w-full flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-black text-[#fffbd4] tracking-wider uppercase drop-shadow-[0_1px_0_#0d0d0d]">
-              Select {matchMode === 'single' ? 'Category' : `Categories (${selectedIndices.length} / ${totalRounds})`}
-            </h2>
-            <p className="text-xs text-[#fffbd4]/70 font-semibold">
-              {matchMode === 'single' ? 'Pick a category to begin' : 'Choose in order of play'}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onMouseEnter={() => soundFx.playHover()}
-            onClick={handleRandomize}
-            className="balatro-btn-dark px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer text-[#fffbd4]"
-          >
-            Random Selection
-          </button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative w-full">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search categories (e.g. animals, movies, gaming, food)..."
-            className="w-full bg-[#0a0f23]/90 border-2 border-slate-700/80 focus:border-amber-400 rounded-xl px-3.5 py-2 text-xs md:text-sm text-[#fffbd4] placeholder-slate-400 focus:outline-none transition shadow-inner"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-black px-1.5 py-0.5 rounded cursor-pointer"
-            >
-              CLEAR
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Category Grid with Hidden Scrollbar (Shows 9 Categories / 3 Rows Before Scroll) */}
-      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6 min-h-[440px] max-h-[62vh] content-start items-start auto-rows-max overflow-y-auto px-1 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {filteredCategories.length === 0 ? (
-          <div className="col-span-full py-8 text-center text-slate-400 font-bold text-sm bg-black/30 rounded-xl border border-slate-800">
-            No categories found matching &quot;{searchQuery}&quot;. Try another search term!
-          </div>
-        ) : (
-          filteredCategories.map((cat) => {
-            const isSelected = selectedIndices.includes(cat.index);
-            const orderIndex = selectedIndices.indexOf(cat.index);
-
-            return (
-              <div
-                key={cat.index}
-                onMouseEnter={() => soundFx.playHover()}
-                onClick={() => toggleCategory(cat.index)}
-                className={`relative rounded-xl cursor-pointer transition-all flex flex-col justify-between select-none min-h-[132px] px-4 pt-3.5 pb-5 ${
-                  isSelected
-                    ? 'bg-[#0d0d0d] border-2 border-[#fffbd4] cat-card-selected'
-                    : 'cat-card-unselected'
-                }`}
-              >
-                {/* Absolute Badge: positioned top-3 right-3, never squeezes text */}
-                {isSelected && (
-                  <span className="cat-selected-badge absolute top-3 right-3 w-6 h-6 rounded-full font-black text-xs flex items-center justify-center shrink-0 z-10 pointer-events-none">
-                    {matchMode === 'multi' ? orderIndex + 1 : '✓'}
-                  </span>
-                )}
-
-                {/* Title Section with reserved right padding for badge */}
-                <div className="mb-2 pr-7 min-w-0">
-                  <span className={`font-black text-sm leading-snug break-words block ${isSelected ? 'text-[#fffbd4]' : 'text-[#fffbd4]/80'}`}>
-                    {cat.title}
-                  </span>
-                  {cat.subtitle && (
-                    <span className="text-[11px] font-semibold text-amber-300/90 leading-tight block mt-1">
-                      {cat.subtitle}
-                    </span>
-                  )}
-                </div>
-
-                {/* Footer row with dedicated bottom clearance */}
-                <div className="flex items-center justify-between mt-auto pt-2 pb-0">
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${isSelected ? 'cat-count-badge-selected' : 'bg-[#0d0d0d] text-[#fffbd4]/60'}`}>
-                    {cat.count} Items
-                  </span>
-                  <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'cat-status-selected' : 'text-[#fffbd4]/50'}`}>
-                    {isSelected ? (matchMode === 'multi' ? `Round ${orderIndex + 1}` : 'Selected') : 'Pick'}
-                  </span>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Boss Rush Rules & Conditions (Configured Pre-Game) */}
-      {matchMode === 'boss_rush' && !isOnlinePicker && (
-        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 md:p-5 mb-6 shadow-[0_6px_0_#0d0d0d] animate-in fade-in">
-          <div className="mb-4 border-b border-[#891c1c]/40 pb-3">
+        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 md:p-5 mb-5 shadow-[0_4px_0_#0d0d0d] animate-in fade-in">
+          <div className="mb-3.5 border-b border-[#891c1c]/40 pb-2.5 flex items-center justify-between">
             <h2 className="text-sm md:text-base font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_1px_0_#0d0d0d]">
-              Boss Rush Solo Challenge Rules
+              Boss Rush Challenge Rules
             </h2>
+            <span className="text-[11px] font-semibold text-[#fffbd4]/70">
+              {isOnline ? 'Co-op Squad Speedrun' : 'Solo Speedrun'}
+            </span>
           </div>
 
           <div className="space-y-4">
@@ -482,20 +320,24 @@ export default function MatchSetup({
         </div>
       )}
 
-      {/* Match Rules & Timers (Configured Pre-Game) */}
       {matchMode !== 'boss_rush' && !isOnlinePicker && (
-        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 md:p-5 mb-6 shadow-[0_6px_0_#0d0d0d]">
-          <div className="mb-4 border-b border-[#891c1c]/40 pb-3 flex items-center justify-between">
+        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 md:p-5 mb-5 shadow-[0_4px_0_#0d0d0d] animate-in fade-in">
+          <div className="mb-3.5 border-b border-[#891c1c]/40 pb-2.5 flex items-center justify-between">
             <h2 className="text-sm md:text-base font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_1px_0_#0d0d0d]">
               Match Rules & Conditions
             </h2>
+            {matchMode === 'multi' && (
+              <span className="text-[11px] font-semibold text-[#fffbd4]/70">
+                Championship Series
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Multi-Round Count Selector */}
             {matchMode === 'multi' && (
               <div className="col-span-full border-b border-[#891c1c]/40 pb-4 mb-1">
-                <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-2">
+                <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-2 text-center md:text-left">
                   Total Match Rounds
                 </label>
                 <div className="flex items-center justify-center gap-3">
@@ -505,7 +347,7 @@ export default function MatchSetup({
                       type="button"
                       onMouseEnter={() => soundFx.playHover()}
                       onClick={() => { soundFx.playClick(); setTotalRounds(num); }}
-                      className={`px-6 py-2 min-w-[58px] rounded-xl font-black text-sm cursor-pointer transition uppercase ${
+                      className={`flex-1 max-w-[150px] py-2.5 rounded-xl font-black text-xs sm:text-sm cursor-pointer transition uppercase text-center ${
                         totalRounds === num
                           ? 'balatro-btn-blue text-white shadow-md'
                           : 'balatro-btn-dark text-[#fffbd4]'
@@ -656,6 +498,109 @@ export default function MatchSetup({
         </div>
       )}
 
+      {/* Category Selection Header & Search Bar */}
+      <div className="w-full flex flex-col gap-2.5 mb-3 px-1">
+        <div className="w-full flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-black text-[#fffbd4] tracking-wider uppercase drop-shadow-[0_1px_0_#0d0d0d]">
+              Select {matchMode === 'single' ? 'Category' : `Categories (${selectedIndices.length} / ${totalRounds})`}
+            </h2>
+            <p className="text-xs text-[#fffbd4]/70 font-semibold">
+              {matchMode === 'single' ? 'Pick a category to begin' : 'Choose in order of play'}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onMouseEnter={() => soundFx.playHover()}
+            onClick={handleRandomize}
+            className="balatro-btn-dark px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer text-[#fffbd4]"
+          >
+            Random Selection
+          </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search categories (e.g. animals, movies, gaming, food)..."
+            className="w-full bg-[#0a0f23]/90 border-2 border-slate-700/80 focus:border-amber-400 rounded-xl px-3.5 py-2 text-xs md:text-sm text-[#fffbd4] placeholder-slate-400 focus:outline-none transition shadow-inner"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-black px-1.5 py-0.5 rounded cursor-pointer"
+            >
+              CLEAR
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Category Grid with Hidden Scrollbar (Shows 9 Categories / 3 Rows Before Scroll) */}
+      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6 min-h-[440px] max-h-[62vh] auto-rows-[140px] content-start overflow-y-auto px-1 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {filteredCategories.length === 0 ? (
+          <div className="col-span-full py-8 text-center text-slate-400 font-bold text-sm bg-black/30 rounded-xl border border-slate-800">
+            No categories found matching &quot;{searchQuery}&quot;. Try another search term!
+          </div>
+        ) : (
+          filteredCategories.map((cat) => {
+            const isSelected = selectedIndices.includes(cat.index);
+            const orderIndex = selectedIndices.indexOf(cat.index);
+
+            return (
+              <div
+                key={cat.index}
+                onMouseEnter={() => soundFx.playHover()}
+                onClick={() => toggleCategory(cat.index)}
+                className={`relative rounded-xl cursor-pointer transition-all flex flex-col justify-between select-none h-[140px] px-4 pt-3.5 pb-3 ${
+                  isSelected
+                    ? 'bg-[#0d0d0d] border-2 border-[#fffbd4] cat-card-selected'
+                    : 'cat-card-unselected'
+                }`}
+              >
+                {/* Absolute Badge: positioned top-3 right-3, never squeezes text */}
+                {isSelected && (
+                  <span className="cat-selected-badge absolute top-3 right-3 w-6 h-6 rounded-full font-black text-xs flex items-center justify-center shrink-0 z-10 pointer-events-none">
+                    {matchMode === 'multi' ? orderIndex + 1 : '✓'}
+                  </span>
+                )}
+
+                {/* Title & Subtitle Section with fixed height lines to keep all cards identical */}
+                <div className="pr-7 min-w-0">
+                  <span className={`font-black text-sm leading-snug line-clamp-2 block ${isSelected ? 'text-[#fffbd4]' : 'text-[#fffbd4]/80'}`}>
+                    {cat.title}
+                  </span>
+                  {cat.subtitle ? (
+                    <span className="text-[11px] font-semibold text-amber-300/90 leading-tight block mt-1 truncate" title={cat.subtitle}>
+                      {cat.subtitle}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] leading-tight block mt-1 invisible select-none pointer-events-none" aria-hidden="true">
+                      &nbsp;
+                    </span>
+                  )}
+                </div>
+
+                {/* Footer row with dedicated bottom clearance */}
+                <div className="flex items-center justify-between mt-auto pt-1">
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${isSelected ? 'cat-count-badge-selected' : 'bg-[#0d0d0d] text-[#fffbd4]/60'}`}>
+                    {cat.count} Items
+                  </span>
+                  <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'cat-status-selected' : 'text-[#fffbd4]/50'}`}>
+                    {isSelected ? (matchMode === 'multi' ? `Round ${orderIndex + 1}` : 'Selected') : 'Pick'}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
       {/* Start / Save Actions */}
       <div className="w-full flex justify-center pb-6">
         {isOnline ? (
@@ -716,7 +661,7 @@ export default function MatchSetup({
             onMouseEnter={() => soundFx.playHover()}
             className="font-black text-xl md:text-2xl px-12 py-4 rounded-2xl tracking-wider uppercase transition shadow-xl balatro-btn-purple text-white cursor-pointer"
           >
-            Configure Teams
+            Continue
           </button>
         )}
       </div>
@@ -754,7 +699,7 @@ export default function MatchSetup({
                 }}
                 className="balatro-btn-blue px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-white flex items-center gap-2 shadow-lg hover:scale-105 transition"
               >
-                Configure Teams
+                Continue
               </button>
             </div>
           </div>
