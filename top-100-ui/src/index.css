@@ -1007,11 +1007,27 @@
 }
 
 /* Guessing card active pulse in Blue Mode */
-.theme-blue .guesser-card-active {
+.theme-blue .guesser-card-active,
+.theme-blue .neon-guesser-highlight {
+  background-color: #1e40af !important;
   box-shadow:
     0 0 18px rgba(56, 189, 248, 0.95),
     0 0 35px rgba(255, 251, 212, 0.5),
     inset 0 0 10px rgba(56, 189, 248, 0.3) !important;
+}
+
+/* Swatch and slider styles */
+.theme-red-swatch {
+  background-color: #ef5368 !important;
+}
+.settings-slider-red {
+  accent-color: #ef5368 !important;
+}
+.theme-blue .theme-red-swatch {
+  background-color: #ef5368 !important;
+}
+.theme-blue .settings-slider-red {
+  accent-color: #ef5368 !important;
 }
 
 /* Scrollbar in Blue Mode */

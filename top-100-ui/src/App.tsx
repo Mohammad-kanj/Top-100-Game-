@@ -1118,7 +1118,7 @@ export default function App(): React.JSX.Element {
                     soundFx.playClick();
                     setShowSkipConfirm(true);
                   }}
-                  className="balatro-btn-dark w-8 h-8 rounded-lg flex items-center justify-center text-slate-200 border-white/20 hover:border-rose-400 hover:text-white active:translate-y-0.5 cursor-pointer"
+                  className="balatro-btn-dark w-9 h-9 rounded-xl flex items-center justify-center text-[#fffbd4] hover:text-white cursor-pointer transition active:translate-y-0.5"
                   title="Surrender Round"
                   aria-label="Surrender Round"
                 >
@@ -1136,7 +1136,7 @@ export default function App(): React.JSX.Element {
                     setSurrenderOnCooldown(true);
                     online.voteSurrender(true);
                   }}
-                  className="balatro-btn-red w-8 h-8 rounded-lg flex items-center justify-center text-white active:translate-y-0.5 cursor-pointer shadow-md"
+                  className="balatro-btn-dark w-9 h-9 rounded-xl flex items-center justify-center text-[#fffbd4] hover:text-white cursor-pointer transition active:translate-y-0.5"
                   title="Call 60s Surrender Vote"
                   aria-label="Call Surrender Vote"
                 >
@@ -1150,7 +1150,7 @@ export default function App(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={handleRequestMainMenu}
-                  className="balatro-btn-dark w-9 h-9 rounded-xl flex items-center justify-center text-[#fffbd4] hover:text-white hover:border-[#ef5368] active:translate-y-0.5 cursor-pointer shadow-md transition"
+                  className="balatro-btn-dark w-9 h-9 rounded-xl flex items-center justify-center text-[#fffbd4] hover:text-white cursor-pointer transition active:translate-y-0.5"
                   title="Main Menu"
                   aria-label="Main Menu"
                 >
@@ -1280,10 +1280,14 @@ export default function App(): React.JSX.Element {
               return (
                 <div
                   key={idx}
-                  className={`px-5 py-3 rounded-2xl min-w-[155px] md:min-w-[185px] text-center transition-all relative ${
+                  className={`px-5 py-3 rounded-2xl min-w-[155px] md:min-w-[185px] text-center transition-all relative border-2 ${
                     isActive
-                      ? 'neon-guesser-highlight bg-[#891c1c]'
-                      : 'balatro-card bg-[#0a0f23]'
+                      ? colorTheme === 'blue'
+                        ? 'neon-guesser-highlight bg-[#1e40af] border-cyan-400'
+                        : 'neon-guesser-highlight bg-[#891c1c] border-rose-400'
+                      : colorTheme === 'blue'
+                      ? 'balatro-card bg-[#0e1422] border-[#1e40af]'
+                      : 'balatro-card bg-[#0a0f23] border-[#891c1c]'
                   }`}
                 >
                   {/* Team Name */}
@@ -1320,9 +1324,15 @@ export default function App(): React.JSX.Element {
                         <span>Milestones</span>
                         <span>Goal: {pointThreshold || 2000} pts</span>
                       </div>
-                      <div className="relative w-full bg-[#0d0d0d] rounded-full h-2 overflow-hidden border border-[#891c1c]">
+                      <div className={`relative w-full bg-[#0d0d0d] rounded-full h-2 overflow-hidden border ${
+                        colorTheme === 'blue' ? 'border-[#1e40af]' : 'border-[#891c1c]'
+                      }`}>
                         <div
-                          className="bg-gradient-to-r from-[#891c1c] via-[#ef5368] to-[#ffd700] h-full transition-all duration-300"
+                          className={`h-full transition-all duration-300 ${
+                            colorTheme === 'blue'
+                              ? 'bg-gradient-to-r from-[#1e40af] via-[#38bdf8] to-[#ffd700]'
+                              : 'bg-gradient-to-r from-[#891c1c] via-[#ef5368] to-[#ffd700]'
+                          }`}
                           style={{ width: `${Math.min(100, Math.round((currentScore / (pointThreshold || 2000)) * 100))}%` }}
                         />
                       </div>
@@ -1360,9 +1370,15 @@ export default function App(): React.JSX.Element {
                   {/* Point threshold progress bar */}
                   {target > 0 && !isBossRush && (
                     <div className="mt-2 w-full">
-                      <div className="w-full bg-[#0d0d0d] rounded-full h-1.5 overflow-hidden border border-[#891c1c]">
+                      <div className={`w-full bg-[#0d0d0d] rounded-full h-1.5 overflow-hidden border ${
+                        colorTheme === 'blue' ? 'border-[#1e40af]' : 'border-[#891c1c]'
+                      }`}>
                         <div
-                          className="bg-gradient-to-r from-[#891c1c] via-[#ef5368] to-[#fffbd4] h-full transition-all duration-300"
+                          className={`h-full transition-all duration-300 ${
+                            colorTheme === 'blue'
+                              ? 'bg-gradient-to-r from-[#1e40af] via-[#38bdf8] to-[#fffbd4]'
+                              : 'bg-gradient-to-r from-[#891c1c] via-[#ef5368] to-[#fffbd4]'
+                          }`}
                           style={{ width: `${Math.min(100, Math.round((currentScore / target) * 100))}%` }}
                         />
                       </div>
@@ -1378,7 +1394,7 @@ export default function App(): React.JSX.Element {
           <div className="w-full max-w-[1240px] mx-auto mb-3 flex flex-col md:flex-row items-center md:items-start justify-between gap-3 relative">
             
             {/* Box on the far left: Most Recent Guess (Much Bigger Word & Points Display) */}
-            <div className="w-full md:w-72 balatro-card p-3.5 rounded-2xl border-2 border-[#891c1c] flex flex-col justify-between shrink-0 shadow-[0_5px_0_#0d0d0d] min-h-[110px]">
+            <div className="w-full md:w-72 balatro-card p-3.5 rounded-2xl border-2 flex flex-col justify-between shrink-0 shadow-[0_5px_0_#0d0d0d] min-h-[110px]">
               <div className="text-[10px] font-black uppercase tracking-wider text-[#fffbd4] flex items-center justify-between mb-2 pb-1.5 border-b border-[#891c1c]/40">
                 <span>Recent Guess</span>
                 {lastGuess.status !== 'none' && (
@@ -1490,7 +1506,7 @@ export default function App(): React.JSX.Element {
                       : 'type your guess'
                   }
                   disabled={Boolean(activeGameState.is_round_over)}
-                  className="w-full bg-[#0d0d0d] border-2 border-[#891c1c] border-b-4 border-b-[#05070f] focus:border-[#fffbd4] text-[#fffbd4] placeholder:text-[#fffbd4]/40 px-5 py-3.5 rounded-2xl text-lg font-black outline-none text-center transition shadow-[inset_0_3px_6px_rgba(13,13,13,0.8),0_4px_0_#0d0d0d]"
+                  className="w-full bg-[#0d0d0d] border-2 border-[#891c1c] focus:border-[#fffbd4] text-[#fffbd4] placeholder:text-[#fffbd4]/40 px-5 py-3.5 rounded-2xl text-lg font-black outline-none text-center transition shadow-[inset_0_3px_6px_rgba(13,13,13,0.8),0_4px_0_#0d0d0d]"
                   autoFocus
                 />
               </form>
@@ -1751,6 +1767,7 @@ export default function App(): React.JSX.Element {
           teams={activeGameState.teams || []}
           onSave={handleSaveTeams}
           onClose={() => setShowTeams(false)}
+          matchMode={pendingMatchConfig?.match_mode || setupInitialMode}
           onStartGame={
             screen === 'MATCH_SETUP' && pendingMatchConfig
               ? () => {
@@ -1805,7 +1822,7 @@ export default function App(): React.JSX.Element {
       )}
 
       {/* CONFETTI CANVAS BURST */}
-      <ConfettiCanvas active={confettiActive} durationMs={6000} />
+      <ConfettiCanvas active={confettiActive} durationMs={6000} theme={colorTheme} />
 
       {/* MODAL 9: POST-GAME CELEBRATION & SCROLLING WHEEL */}
       {screen === 'ARENA' && showCelebration && (

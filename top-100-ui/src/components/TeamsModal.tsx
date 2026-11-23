@@ -6,14 +6,21 @@ interface TeamsModalProps {
   onSave: (teams: string[]) => void;
   onClose: () => void;
   onStartGame?: () => void;
+  matchMode?: string;
 }
 
-export default function TeamsModal({ teams, onSave, onClose, onStartGame }: TeamsModalProps): React.JSX.Element {
-  const [localTeams, setLocalTeams] = useState<string[]>([...teams]);
+export default function TeamsModal({ teams, onSave, onClose, onStartGame, matchMode }: TeamsModalProps): React.JSX.Element {
+  const isBossRush = matchMode === 'boss_rush';
+  const [localTeams, setLocalTeams] = useState<string[]>(() => {
+    if (isBossRush && teams.length > 1) {
+      return [teams[0] || 'Team 1'];
+    }
+    return teams.length > 0 ? [...teams] : ['Team 1'];
+  });
 
   const addTeam = (): void => {
     soundFx.playClick();
-    if (localTeams.length < 8) {
+    if (!isBossRush && localTeams.length < 8) {
       setLocalTeams([...localTeams, `Team ${localTeams.length + 1}`]);
     }
   };
@@ -50,7 +57,7 @@ export default function TeamsModal({ teams, onSave, onClose, onStartGame }: Team
         {/* Header */}
         <div className="bg-[#0d0d0d] border-b-2 border-[#891c1c] p-5 flex items-center justify-between">
           <h2 className="text-xl font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_2px_0_#0d0d0d]">
-            {onStartGame ? 'Step 2: Configure Teams' : 'Team Setup'}
+            {onStartGame ? 'Configure Teams' : 'Team Setup'}
           </h2>
           <button 
             onClick={() => { soundFx.playClick(); onClose(); }}
@@ -64,7 +71,7 @@ export default function TeamsModal({ teams, onSave, onClose, onStartGame }: Team
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-3 text-[#fffbd4]">
           <div className="text-xs text-[#fffbd4] font-black uppercase tracking-wider mb-2">
-            Participating Teams (1 to 8 teams)
+            {isBossRush ? 'Solo Boss Rush (1 Player/Team)' : 'Participating Teams (1 to 8 teams)'}
           </div>
 
           {localTeams.map((team, idx) => (
@@ -80,7 +87,7 @@ export default function TeamsModal({ teams, onSave, onClose, onStartGame }: Team
                 maxLength={24}
                 className="flex-1 bg-[#0d0d0d] border-2 border-[#891c1c] border-b-4 border-b-[#0a0f23] focus:border-[#fffbd4] text-[#fffbd4] placeholder-[#fffbd4]/40 px-3.5 py-2.5 rounded-xl font-black outline-none text-sm transition shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
               />
-              {localTeams.length > 1 && (
+              {!isBossRush && localTeams.length > 1 && (
                 <button
                   type="button"
                   onMouseEnter={() => soundFx.playHover()}
@@ -94,7 +101,7 @@ export default function TeamsModal({ teams, onSave, onClose, onStartGame }: Team
             </div>
           ))}
 
-          {localTeams.length < 8 && (
+          {!isBossRush && localTeams.length < 8 && (
             <button
               type="button"
               onMouseEnter={() => soundFx.playHover()}
@@ -113,14 +120,14 @@ export default function TeamsModal({ teams, onSave, onClose, onStartGame }: Team
             onMouseEnter={() => soundFx.playHover()}
             className="balatro-btn-dark px-6 py-3 rounded-2xl text-[#fffbd4] font-black transition text-sm md:text-base uppercase tracking-wider cursor-pointer"
           >
-            {onStartGame ? '← Categories' : 'Cancel'}
+            {onStartGame ? 'Back' : 'Cancel'}
           </button>
           <button
             onClick={handleSave}
             onMouseEnter={() => soundFx.playHover()}
             className="balatro-btn-amber font-black px-8 py-3 rounded-2xl transition tracking-wider text-sm md:text-base uppercase cursor-pointer text-amber-950 shadow-md"
           >
-            {onStartGame ? 'Start Game →' : 'Save Teams'}
+            {onStartGame ? 'Start Game' : 'Save Teams'}
           </button>
         </div>
 

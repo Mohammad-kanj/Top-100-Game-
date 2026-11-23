@@ -186,7 +186,7 @@ export default function SettingsModal({
                   }}
                   onMouseUp={() => soundFx.playSettingsChange()}
                   onTouchEnd={() => soundFx.playSettingsChange()}
-                  className="flex-1 accent-[#ef5368] cursor-pointer h-3 disabled:opacity-40"
+                  className="flex-1 accent-[#ef5368] settings-slider-red cursor-pointer h-3 disabled:opacity-40"
                 />
                 <span className="text-sm font-mono font-black text-[#fffbd4] w-12 text-right">
                   {isMuted ? '0%' : `${Math.round(sfxVol * 100)}%`}
@@ -232,7 +232,7 @@ export default function SettingsModal({
                   onChange={(e) => handleBrightnessChange(parseFloat(e.target.value))}
                   onMouseUp={() => soundFx.playSettingsChange()}
                   onTouchEnd={() => soundFx.playSettingsChange()}
-                  className="flex-1 accent-[#ef5368] cursor-pointer h-3"
+                  className="flex-1 accent-[#ef5368] settings-slider-red cursor-pointer h-3"
                 />
               </div>
               <p className="text-[11px] text-[#fffbd4]/60 font-semibold">
@@ -257,7 +257,7 @@ export default function SettingsModal({
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="w-4 h-4 rounded-full bg-[#ef5368] border border-white shadow-sm shrink-0" />
+                    <span className="w-4 h-4 rounded-full theme-red-swatch border border-white shadow-sm shrink-0" />
                     <div>
                       <div className="text-xs md:text-sm font-black text-[#fffbd4]">Red Theme</div>
                       <div className="text-[10px] text-[#fffbd4]/60 font-semibold">Cyber Crimson</div>

@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 interface ConfettiCanvasProps {
   active: boolean;
   durationMs?: number;
+  theme?: 'red' | 'blue';
 }
 
 interface Particle {
@@ -20,17 +21,26 @@ interface Particle {
   alpha: number;
 }
 
-const CELEBRATION_COLORS = [
-  '#62f6bd', // Mint neon
-  '#00b6de', // Sky cyan
-  '#107dee', // Electric azure
-  '#9cf6ff', // Ice cyan
-  '#4a34de', // Royal violet
-  '#6ad6cd', // Soft mint
-  '#10aa83'  // Emerald teal
+const RED_THEME_COLORS = [
+  '#ef5368', // Cyber Crimson
+  '#f43f5e', // Vivid Rose
+  '#fbbf24', // Amber Gold
+  '#ffd700', // Metallic Gold
+  '#ff6b6b', // Coral Bright
+  '#fffbd4', // Lemon Chiffon
+  '#e11d48'  // Deep Ruby
 ];
 
-export default function ConfettiCanvas({ active, durationMs = 5000 }: ConfettiCanvasProps): React.JSX.Element | null {
+const BLUE_THEME_COLORS = [
+  '#38bdf8', // Sky Cyan
+  '#00b6de', // Electric Azure
+  '#1e40af', // Royal Sapphire
+  '#9cf6ff', // Ice Cyan
+  '#62f6bd', // Mint Neon
+  '#ffd700'  // Gold Accent
+];
+
+export default function ConfettiCanvas({ active, durationMs = 5000, theme }: ConfettiCanvasProps): React.JSX.Element | null {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const isReduceMotion = typeof localStorage !== 'undefined' && localStorage.getItem('top100_reduce_motion') === 'true';
@@ -42,6 +52,9 @@ export default function ConfettiCanvas({ active, durationMs = 5000 }: ConfettiCa
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    const isBlue = theme === 'blue' || (typeof document !== 'undefined' && document.documentElement.classList.contains('theme-blue'));
+    const celebrationColors = isBlue ? BLUE_THEME_COLORS : RED_THEME_COLORS;
 
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
@@ -84,7 +97,7 @@ export default function ConfettiCanvas({ active, durationMs = 5000 }: ConfettiCa
         y: startY,
         w: Math.random() * 12 + 6,
         h: Math.random() * 8 + 4,
-        color: CELEBRATION_COLORS[Math.floor(Math.random() * CELEBRATION_COLORS.length)],
+        color: celebrationColors[Math.floor(Math.random() * celebrationColors.length)],
         vx,
         vy,
         tilt: Math.random() * 10 - 10,

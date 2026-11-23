@@ -81,7 +81,7 @@ export default function MatchSetup({
     }
   }, [matchMode, pointThreshold]);
 
-  const isLessThanTwoTeams = matchMode !== 'boss_rush' && teams.length < 2;
+  const isInvalidTeams = matchMode === 'boss_rush' ? teams.length !== 1 : teams.length < 1;
 
   // Ensure selected indices match mode
   useEffect(() => {
@@ -146,7 +146,7 @@ export default function MatchSetup({
   };
 
   const handleStart = (): void => {
-    if (isLessThanTwoTeams) {
+    if (isInvalidTeams) {
       soundFx.playIncorrect();
       setShowOneTeamModal(true);
       return;
@@ -184,23 +184,7 @@ export default function MatchSetup({
           {isOnlineConfigure ? 'Configure Online Match' : isOnlinePicker ? 'Pick Categories' : 'Match Setup'}
         </h1>
 
-        {!isOnline ? (
-          <button
-            onClick={() => { soundFx.playClick(); onOpenTeams(); }}
-            onMouseEnter={() => soundFx.playHover()}
-            className={`font-black px-6 py-2.5 rounded-2xl text-sm md:text-base uppercase tracking-wider cursor-pointer flex items-center gap-1.5 transition-all ${
-              isLessThanTwoTeams
-                ? 'balatro-btn-red ring-2 ring-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] animate-pulse'
-                : 'balatro-btn-blue text-white shadow-md'
-            }`}
-            title="Configure Teams"
-          >
-            <span>Teams</span>
-            <span className="font-black text-base">→</span>
-          </button>
-        ) : (
-          <div className="w-11" />
-        )}
+        <div className="w-11" />
       </div>
 
       {/* Match Mode Selection */}
@@ -260,96 +244,6 @@ export default function MatchSetup({
         </button>
       </div>
 
-      {/* Multi-Round Settings Banner */}
-      {matchMode === 'multi' && (
-        <div className="w-full bg-[#0d0d0d] border-2 border-[#891c1c] border-b-4 border-b-[#891c1c] rounded-xl p-4 mb-5 text-center animate-in fade-in shadow-[0_4px_0_#0a0f23]">
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-sm font-black text-[#fffbd4] uppercase mr-1">Rounds:</span>
-            {[2, 3, 4, 5].map((num) => (
-              <button
-                key={num}
-                type="button"
-                onMouseEnter={() => soundFx.playHover()}
-                onClick={() => { soundFx.playClick(); setTotalRounds(num); }}
-                className={`px-6 py-2.5 min-w-[58px] rounded-2xl font-black text-base cursor-pointer transition uppercase ${
-                  totalRounds === num
-                    ? 'balatro-btn-blue text-white shadow-md'
-                    : 'balatro-btn-dark text-[#fffbd4]'
-                }`}
-              >
-                {num}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Boss Rush Settings Banner */}
-      {matchMode === 'boss_rush' && (
-        <div className="w-full bg-[#0d0d0d] border-2 border-slate-700 border-b-4 border-b-slate-700 rounded-xl p-4 mb-5 text-center animate-in fade-in shadow-[0_4px_0_#0a0f23]">
-          <div className="text-xs font-black tracking-widest text-sky-400 uppercase mb-1">
-            Boss Rush Solo Challenge
-          </div>
-          <div className="text-base font-black text-[#fffbd4] tracking-wide mb-3">
-            Choose Your Countdown Timer:
-          </div>
-
-          <div className="flex items-center justify-center gap-3">
-            {[
-              { label: '5 Min', secs: 300 },
-              { label: '10 Min', secs: 600 },
-              { label: '15 Min', secs: 900 }
-            ].map(({ label, secs }) => (
-              <button
-                key={secs}
-                type="button"
-                onMouseEnter={() => soundFx.playHover()}
-                onClick={() => { soundFx.playClick(); setBossRushDuration(secs); }}
-                className={`px-5 py-2.5 rounded-2xl font-black text-sm cursor-pointer transition uppercase ${
-                  bossRushDuration === secs
-                    ? 'balatro-btn-blue text-white shadow-md'
-                    : 'balatro-btn-dark text-[#fffbd4]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="text-base font-black text-[#fffbd4] tracking-wide mt-4 mb-3">
-            Target Score Goal:
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            {[
-              { label: '1,000 pts', val: 1000 },
-              { label: '1,500 pts', val: 1500 },
-              { label: '2,000 pts', val: 2000 },
-              { label: '3,000 pts', val: 3000 },
-              { label: '4,000 pts', val: 4000 },
-              { label: '5,000 pts', val: 5000 }
-            ].map(({ label, val }) => (
-              <button
-                key={val}
-                type="button"
-                onMouseEnter={() => soundFx.playHover()}
-                onClick={() => {
-                  soundFx.playClick();
-                  setPointThreshold(val);
-                }}
-                className={`px-3.5 py-2 rounded-2xl font-black text-xs sm:text-sm cursor-pointer transition uppercase ${
-                  (pointThreshold || 2000) === val
-                    ? 'balatro-btn-blue text-white shadow-md'
-                    : 'balatro-btn-dark text-[#fffbd4]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Category Selection Header & Search Bar */}
       <div className="w-full flex flex-col gap-2.5 mb-3 px-1">
         <div className="w-full flex items-center justify-between">
@@ -393,8 +287,8 @@ export default function MatchSetup({
         </div>
       </div>
 
-      {/* Category Grid with Hidden Scrollbar */}
-      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6 max-h-[44vh] overflow-y-auto px-1 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      {/* Category Grid with Hidden Scrollbar (Shows 9 Categories / 3 Rows Before Scroll) */}
+      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6 min-h-[440px] max-h-[62vh] overflow-y-auto px-1 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {filteredCategories.length === 0 ? (
           <div className="col-span-full py-8 text-center text-slate-400 font-bold text-sm bg-black/30 rounded-xl border border-slate-800">
             No categories found matching &quot;{searchQuery}&quot;. Try another search term!
@@ -449,16 +343,115 @@ export default function MatchSetup({
         )}
       </div>
 
+      {/* Boss Rush Rules & Conditions (Configured Pre-Game) */}
+      {matchMode === 'boss_rush' && !isOnlinePicker && (
+        <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 md:p-5 mb-6 shadow-[0_6px_0_#0d0d0d] animate-in fade-in">
+          <div className="mb-4 border-b border-[#891c1c]/40 pb-3">
+            <h2 className="text-sm md:text-base font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_1px_0_#0d0d0d]">
+              Boss Rush Solo Challenge Rules
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-2">
+                Countdown Timer
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: '5 Min', secs: 300 },
+                  { label: '10 Min', secs: 600 },
+                  { label: '15 Min', secs: 900 }
+                ].map(({ label, secs }) => (
+                  <button
+                    key={secs}
+                    type="button"
+                    onMouseEnter={() => soundFx.playHover()}
+                    onClick={() => { soundFx.playClick(); setBossRushDuration(secs); }}
+                    className={`py-2.5 rounded-xl font-black text-xs sm:text-sm cursor-pointer transition uppercase ${
+                      bossRushDuration === secs
+                        ? 'balatro-btn-blue text-white shadow-md'
+                        : 'balatro-btn-dark text-[#fffbd4]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-2">
+                Target Score Goal
+              </label>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {[
+                  { label: '1,000 pts', val: 1000 },
+                  { label: '1,500 pts', val: 1500 },
+                  { label: '2,000 pts', val: 2000 },
+                  { label: '3,000 pts', val: 3000 },
+                  { label: '4,000 pts', val: 4000 },
+                  { label: '5,000 pts', val: 5000 }
+                ].map(({ label, val }) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onMouseEnter={() => soundFx.playHover()}
+                    onClick={() => {
+                      soundFx.playClick();
+                      setPointThreshold(val);
+                    }}
+                    className={`py-2 rounded-xl font-black text-xs uppercase tracking-wider text-center cursor-pointer transition ${
+                      (pointThreshold || 2000) === val
+                        ? 'balatro-btn-blue text-white shadow-md'
+                        : 'balatro-btn-dark text-[#fffbd4]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Match Rules & Timers (Configured Pre-Game) */}
       {matchMode !== 'boss_rush' && !isOnlinePicker && (
         <div className="w-full bg-[#0a0f23] border-2 border-[#891c1c] rounded-2xl p-4 md:p-5 mb-6 shadow-[0_6px_0_#0d0d0d]">
-          <div className="mb-4 border-b border-[#891c1c]/40 pb-3">
+          <div className="mb-4 border-b border-[#891c1c]/40 pb-3 flex items-center justify-between">
             <h2 className="text-sm md:text-base font-black text-[#fffbd4] tracking-wide uppercase drop-shadow-[0_1px_0_#0d0d0d]">
               Match Rules & Conditions
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Multi-Round Count Selector */}
+            {matchMode === 'multi' && (
+              <div className="col-span-full border-b border-[#891c1c]/40 pb-4 mb-1">
+                <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-2">
+                  Total Match Rounds
+                </label>
+                <div className="flex items-center gap-3">
+                  {[2, 3, 4, 5].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onMouseEnter={() => soundFx.playHover()}
+                      onClick={() => { soundFx.playClick(); setTotalRounds(num); }}
+                      className={`px-6 py-2 min-w-[58px] rounded-xl font-black text-sm cursor-pointer transition uppercase ${
+                        totalRounds === num
+                          ? 'balatro-btn-blue text-white shadow-md'
+                          : 'balatro-btn-dark text-[#fffbd4]'
+                      }`}
+                    >
+                      {num} Rounds
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* End Condition Mode */}
             <div>
               <label className="block text-xs font-black tracking-wider uppercase text-[#fffbd4] mb-2">
@@ -657,21 +650,23 @@ export default function MatchSetup({
             onMouseEnter={() => soundFx.playHover()}
             className="font-black text-xl md:text-2xl px-12 py-4 rounded-2xl tracking-wider uppercase transition shadow-xl balatro-btn-purple text-white cursor-pointer"
           >
-            Next: Configure Teams →
+            Configure Teams
           </button>
         )}
       </div>
 
-      {/* 2+ Teams Required Pop-up Modal */}
+      {/* Teams Required Pop-up Modal */}
       {showOneTeamModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
           <div className="balatro-modal p-6 md:p-8 rounded-3xl max-w-md w-full text-center animate-in zoom-in-95 border-slate-700 shadow-2xl">
             <div className="text-3xl mb-2">⚠️</div>
             <h3 className="text-xl font-black text-rose-400 uppercase tracking-wider mb-2">
-              2+ Teams Required
+              {matchMode === 'boss_rush' ? '1 Team Required' : 'Team Required'}
             </h3>
             <p className="text-sm text-[#fffbd4]/90 font-semibold mb-6 leading-relaxed">
-              Standard and multi-round matches require at least 2 teams. Please add another team in <strong className="text-[#fffbd4]">Teams</strong>, or switch to <strong className="text-sky-400">Boss Rush</strong>.
+              {matchMode === 'boss_rush'
+                ? 'Boss Rush is designed for 1 player/team solo play. Please configure 1 team to start.'
+                : 'Please configure at least 1 team to start the match.'}
             </p>
             <div className="flex items-center justify-center gap-3">
               <button
@@ -693,7 +688,7 @@ export default function MatchSetup({
                 }}
                 className="balatro-btn-blue px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer text-white flex items-center gap-2 shadow-lg hover:scale-105 transition"
               >
-                Go to Teams →
+                Configure Teams
               </button>
             </div>
           </div>
